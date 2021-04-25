@@ -7,12 +7,14 @@ import lombok.RequiredArgsConstructor;
 import java.net.InetAddress;
 
 @RequiredArgsConstructor
-public abstract class PacketListener<T extends Message> {
+public abstract class PacketListener<BoundPacketType extends Message> {
 
     protected final AwdServer srv;
 
-    abstract void packetReceived(InetAddress senderAddr, Message packet) throws Exception;
+    final void packetReceived(InetAddress senderAddr, Message packet) throws Exception {
+        processPacket(senderAddr, (BoundPacketType) packet);
+    }
 
-    protected abstract void processPacket(InetAddress senderAddr, T packet) throws Exception;
+    protected abstract void processPacket(InetAddress senderAddr, BoundPacketType packet) throws Exception;
 
 }

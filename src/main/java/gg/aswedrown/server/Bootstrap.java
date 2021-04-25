@@ -10,10 +10,10 @@ public class Bootstrap {
             AwdServer.getServer().bootstrap();
         } catch (Exception ex) {
             log.error("Failed to start AwdServer (fatal Bootstrap error)!", ex);
-            log.error("Exiting in 10 seconds...");
+            log.error("Exiting in 30 seconds...");
 
             try {
-                Thread.sleep(10000);
+                Thread.sleep(30000);
             } catch (InterruptedException ignored) {}
 
             log.error("Exiting with exit code 1.");

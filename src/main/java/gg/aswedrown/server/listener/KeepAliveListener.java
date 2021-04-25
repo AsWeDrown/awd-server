@@ -1,6 +1,5 @@
 package gg.aswedrown.server.listener;
 
-import com.google.protobuf.Message;
 import gg.aswedrown.net.KeepAlive;
 import gg.aswedrown.server.AwdServer;
 
@@ -10,11 +9,6 @@ public class KeepAliveListener extends PacketListener<KeepAlive> {
 
     public KeepAliveListener(AwdServer srv) {
         super(srv);
-    }
-
-    @Override
-    void packetReceived(InetAddress senderAddr, Message packet) throws Exception {
-        processPacket(senderAddr, (KeepAlive) packet);
     }
 
     @Override

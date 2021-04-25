@@ -9,13 +9,15 @@ import gg.aswedrown.server.util.UnwrappedPacketData;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
 public class PacketManager {
+
+    // TODO - МЕНЯТЬ ЗДЕСЬ:
+    public static final int PROTOCOL_VERSION = 1;
 
     private static final String LISTENERS_FORMAT_ERR_MSG =
             "'listeners' must be a non-null array of even length: PacketWrapper.PacketCase enums " +
@@ -84,8 +86,7 @@ public class PacketManager {
     public boolean sendPacket(InetAddress targetAddr, Message packet) {
         try {
             byte[] data = PacketTransformer.wrap(packet);
-            srv.getUdpServer().send(new DatagramPacket(
-                    data, data.length, targetAddr, srv.getConfig().getUdpServerPort()));
+            srv.getUdpServer().sendRaw(targetAddr, data);
 
             return true; // пакет отправлен успешно
         } catch (IOException ex) {

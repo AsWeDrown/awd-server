@@ -2,9 +2,7 @@ package gg.aswedrown.server.util;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-import gg.aswedrown.net.CreateLobbyRequest;
-import gg.aswedrown.net.KeepAlive;
-import gg.aswedrown.net.PacketWrapper;
+import gg.aswedrown.net.*;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *   TODO: при добавлении в протокол новых пакетов ОБЯЗАТЕЛЬНО ДОБАВЛЯТЬ ИХ СЮДА!

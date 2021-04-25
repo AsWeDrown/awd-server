@@ -1,6 +1,7 @@
 package gg.aswedrown.server;
 
-import gg.aswedrown.net.KeepAlive;
+import gg.aswedrown.net.PacketWrapper;
+import gg.aswedrown.server.listener.HandshakeRequestListener;
 import gg.aswedrown.server.listener.KeepAliveListener;
 import gg.aswedrown.server.listener.PacketManager;
 import lombok.Getter;
@@ -11,14 +12,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -44,9 +41,7 @@ public final class AwdServer {
     private PacketManager packetManager;
 
     @Getter
-    private DatagramSocket udpServer;
-
-    private volatile boolean stopped;
+    private UdpServer udpServer;
 
     void bootstrap() throws Exception {
         if (startupBeginTime != 0)
@@ -108,48 +103,25 @@ public final class AwdServer {
     }
 
     private void onShutdown() {
-        stopped = true;
-        udpServer.close();
+        udpServer.stop();
     }
 
     private void startUdpSocketServer() throws SocketException {
-        log.info("Starting UDP server on port {}. Buffer size: {}.",
-                config.getUdpServerPort(), config.getUdpServerBufferSize());
-
         // Обработчики пакетов.
         packetManager = new PacketManager(this,
-                KeepAlive.class, new KeepAliveListener(this)
+                PacketWrapper.PacketCase.HANDSHAKEREQUEST, new HandshakeRequestListener(this),
+                PacketWrapper.PacketCase.KEEPALIVE, new KeepAliveListener(this)
         );
 
-        // Сам UDP сервер.
-        udpServer = new DatagramSocket(config.getUdpServerPort());
-        byte[] buffer = new byte[config.getUdpServerBufferSize()];
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        // Сам UDP "сервер".
+        udpServer = new UdpServer(
+                config.getUdpServerPort(),
+                config.getUdpServerBufferSize(),
+                executor,
+                packetManager
+        );
 
-        while (!stopped) {
-            try {
-                // Ждём записи очередного UDP пакета в буффер.
-                udpServer.receive(packet);
-
-                // Получаем IP-адрес отправителя пакета.
-                InetAddress senderAddr = packet.getAddress();
-
-                // packet.getData() возвращает массив длиной buffer.length, который
-                // до нужной длины (длины буффера) дополнен хвостом из нулей. Они
-                // нам не нужны. packet.getLength() возвращает точное число полученных
-                // байтов - "обрезаем" буффер до этого числа и получаем "реальный" пакет.
-                byte[] packetData = Arrays.copyOf(buffer, packet.getLength());
-
-                if (packetData.length > 0)
-                    executor.execute(() -> packetManager.receivePacket(senderAddr, packetData));
-                else
-                    log.warn("Ignoring empty packet from {}.", senderAddr.getHostAddress());
-            } catch (IOException ex) {
-                log.error("Failed to receive a UDP packet.", ex);
-            }
-        }
-
-        udpServer.close();
+        udpServer.start();
     }
 
 }

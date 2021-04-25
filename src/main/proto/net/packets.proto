@@ -32,6 +32,9 @@ option java_package = "gg.aswedrown.net";
 // 
 // TODO - При любом изменении этого файла (и, соответственно, версии протокола) выполнять
 //        скрипт "0_on_proto_files_change.bat", находящийся в папке "AwdClient/scripts".
+// 
+// ВАЖНО: основная ("рабочая") версия этого файла находится в папке "AwdClient/net".
+//        В любых местах лежит лишь копия, которая используется максимум для удобства!
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -87,7 +90,7 @@ message PacketWrapper {
     HandshakeRequest handshakeRequest = 1;
     HandshakeResponse handshakeResponse = 2;
     CreateLobbyRequest createLobbyRequest =  100;
-	CreateLobbyResponse createLobbyResponse = 101;
+    CreateLobbyResponse createLobbyResponse = 101;
 
     // PLAY STATE
     KeepAlive keepAlive = 1000;
