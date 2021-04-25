@@ -1,0 +1,5 @@
+executorQueueCapacity: 1000
+executorMaxThreads: 100
+executorThreadsKeepAliveSeconds: 60
+udpServerPort: 23132
+udpServerBufferSize: 51200
