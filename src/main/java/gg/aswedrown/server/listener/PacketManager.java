@@ -6,6 +6,7 @@ import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.util.PacketTransformer;
 import gg.aswedrown.server.util.UnwrappedPacketData;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ public class PacketManager {
     private final Map<PacketWrapper.PacketCase, PacketListener<? extends Message>>
             listeners = new HashMap<>();
 
+    @NonNull
     private final AwdServer srv;
 
     public PacketManager(AwdServer srv, Object... listeners) {
@@ -53,7 +55,7 @@ public class PacketManager {
         }
     }
 
-    public void receivePacket(InetAddress senderAddr, byte[] packetData) {
+    public void receivePacket(@NonNull InetAddress senderAddr, @NonNull byte[] packetData) {
         UnwrappedPacketData unwrappedPacketData;
 
         try {
@@ -83,7 +85,7 @@ public class PacketManager {
         }
     }
 
-    public boolean sendPacket(InetAddress targetAddr, Message packet) {
+    public boolean sendPacket(@NonNull InetAddress targetAddr, @NonNull Message packet) {
         try {
             byte[] data = PacketTransformer.wrap(packet);
             srv.getUdpServer().sendRaw(targetAddr, data);

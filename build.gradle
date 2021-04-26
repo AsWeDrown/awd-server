@@ -37,12 +37,19 @@ processResources {
 
 repositories {
     mavenCentral()
+
+    maven {
+        name 'Public Reflex Repository'
+        url 'https://archiva.reflex.rip/repository/public/'
+    }
 }
 
 def lombokVersion = '1.18.20'
 def log4jVersion = '2.14.1'
 
 dependencies {
+    compile group: 'me.darksidecode.kantanj', name: 'kantanj', version: '1.0.2'
+    compile group: 'org.mongodb', name: 'mongodb-driver-sync', version: '4.2.3'
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.15.8'
     compile group: 'org.yaml', name: 'snakeyaml', version: '1.28'
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: "${log4jVersion}"

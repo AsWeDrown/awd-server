@@ -18,7 +18,7 @@
         </RollingFile>
     </appenders>
     <loggers>
-        <root level="info">
+        <root level="debug">
             <appenderRef ref="stdout"/>
             <appenderRef ref="dailyfile"/>
         </root>

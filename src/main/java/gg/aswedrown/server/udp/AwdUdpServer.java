@@ -1,6 +1,7 @@
-package gg.aswedrown.server;
+package gg.aswedrown.server.udp;
 
 import gg.aswedrown.server.listener.PacketManager;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,20 +15,24 @@ import java.util.concurrent.ExecutorService;
 
 @Slf4j
 @RequiredArgsConstructor
-public class UdpServer {
+public class AwdUdpServer implements UdpServer {
 
     private final int port, bufferSize;
 
+    @NonNull
     private final ExecutorService packetRecvExecService;
 
+    @NonNull
     private final PacketManager packetManager;
 
     private volatile boolean running;
 
     private DatagramSocket udpSocket;
 
+    @Override
     public void start() throws SocketException {
         log.info("Starting UDP server on port {}. Buffer size: {}.", port, bufferSize);
+        log.info("Protocol version: {}.", PacketManager.PROTOCOL_VERSION);
 
         running = true;
         udpSocket = new DatagramSocket(port);
@@ -61,10 +66,12 @@ public class UdpServer {
         udpSocket.close();
     }
 
-    public void sendRaw(InetAddress targetAddr, byte[] data) throws IOException {
+    @Override
+    public void sendRaw(@NonNull InetAddress targetAddr, @NonNull byte[] data) throws IOException {
         udpSocket.send(new DatagramPacket(data, data.length, targetAddr, port));
     }
 
+    @Override
     public void stop() {
         running = false;
         udpSocket.close();

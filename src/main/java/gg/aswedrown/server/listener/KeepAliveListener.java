@@ -13,10 +13,7 @@ public class KeepAliveListener extends PacketListener<KeepAlive> {
 
     @Override
     protected void processPacket(InetAddress senderAddr, KeepAlive packet) throws Exception {
-        System.out.println("Received KeepAlive from " + senderAddr.getHostAddress() + ":");
-        System.out.println(packet.toString());
-        System.out.println("(playerId = " + packet.getPlayerId() + ", testId = " + packet.getTestId() + ")");
-        srv.getPacketManager().sendPacket(senderAddr, packet);
+        // TODO: 26.04.2021
     }
 
 }

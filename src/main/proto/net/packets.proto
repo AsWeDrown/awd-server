@@ -57,8 +57,31 @@ message CreateLobbyRequest {
 }
 
 message CreateLobbyResponse {
-  int32 lobbyId = 1;
+  int32 lobbyId  = 1;
   int32 playerId = 2;
+}
+
+message JoinLobbyRequest {
+  int32  lobbyId    = 1;
+  string playerName = 2;
+}
+
+message JoinLobbyResponse {
+  int32              playerId          = 1;
+  map<int32, string> otherPlayers      = 2;
+}
+
+message LeaveLobbyRequest {
+  int32 lobbyId  = 1;
+  int32 playerId = 2;
+}
+
+message LeaveLobbyResponse {
+  int32 statusCode = 1;
+}
+
+message KickedFromLobby {
+  int32 reason = 1;
 }
 
 /*
@@ -86,13 +109,27 @@ message PacketWrapper {
   // ВАЖНО: внутри этого блока 'oneof packet {...}' запрещено использовать комментарии /* такого */ вида
   //        (в т.ч. многострочные - последовательность "/*" внутри этого блока не должно быть в любом виде).
   oneof packet {
-    // LOBBY STATE
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //   LOBBY STATE
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     HandshakeRequest handshakeRequest = 1;
     HandshakeResponse handshakeResponse = 2;
+
     CreateLobbyRequest createLobbyRequest =  100;
     CreateLobbyResponse createLobbyResponse = 101;
 
-    // PLAY STATE
+    JoinLobbyRequest joinLobbyRequest = 102;
+    JoinLobbyResponse joinLobbyResponse = 103;
+
+    LeaveLobbyRequest leaveLobbyRequest = 104;
+    LeaveLobbyResponse leaveLobbyResponse = 105;
+
+    KickedFromLobby kickedFromLobby = 106;
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //   PLAY STATE
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     KeepAlive keepAlive = 1000;
   }
 }

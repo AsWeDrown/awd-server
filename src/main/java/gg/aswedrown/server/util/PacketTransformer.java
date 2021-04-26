@@ -3,6 +3,7 @@ package gg.aswedrown.server.util;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import gg.aswedrown.net.*;
+import lombok.NonNull;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *   TODO: при добавлении в протокол новых пакетов ОБЯЗАТЕЛЬНО ДОБАВЛЯТЬ ИХ СЮДА!
@@ -22,10 +23,7 @@ public final class PacketTransformer {
      *
      * @see #unwrap(byte[]) для обратного действия.
      */
-    public static byte[] wrap(Message packet) {
-        if (packet == null)
-            throw new NullPointerException("packet cannot be null");
-
+    public static byte[] wrap(@NonNull Message packet) {
         return internalGeneratedWrap(packet);
     }
 
@@ -37,9 +35,9 @@ public final class PacketTransformer {
      *
      * @see #wrap(Message) для обратного действия.
      */
-    public static UnwrappedPacketData unwrap(byte[] rawProto3PacketData) throws InvalidProtocolBufferException {
-        if (rawProto3PacketData == null || rawProto3PacketData.length == 0)
-            throw new IllegalArgumentException("rawProto3PacketData cannot be null or empty");
+    public static UnwrappedPacketData unwrap(@NonNull byte[] rawProto3PacketData) throws InvalidProtocolBufferException {
+        if (rawProto3PacketData.length == 0)
+            throw new IllegalArgumentException("rawProto3PacketData cannot be empty");
 
         return internalGeneratedUnwrap(rawProto3PacketData);
     }
@@ -83,6 +81,26 @@ public final class PacketTransformer {
                 return PacketWrapper.newBuilder().setCreateLobbyResponse(
                         (CreateLobbyResponse) packet).build().toByteArray();
 
+            case JOINLOBBYREQUEST:
+                return PacketWrapper.newBuilder().setJoinLobbyRequest(
+                        (JoinLobbyRequest) packet).build().toByteArray();
+
+            case JOINLOBBYRESPONSE:
+                return PacketWrapper.newBuilder().setJoinLobbyResponse(
+                        (JoinLobbyResponse) packet).build().toByteArray();
+
+            case LEAVELOBBYREQUEST:
+                return PacketWrapper.newBuilder().setLeaveLobbyRequest(
+                        (LeaveLobbyRequest) packet).build().toByteArray();
+
+            case LEAVELOBBYRESPONSE:
+                return PacketWrapper.newBuilder().setLeaveLobbyResponse(
+                        (LeaveLobbyResponse) packet).build().toByteArray();
+
+            case KICKEDFROMLOBBY:
+                return PacketWrapper.newBuilder().setKickedFromLobby(
+                        (KickedFromLobby) packet).build().toByteArray();
+
             case KEEPALIVE:
                 return PacketWrapper.newBuilder().setKeepAlive(
                         (KeepAlive) packet).build().toByteArray();
@@ -112,6 +130,21 @@ public final class PacketTransformer {
 
             case CREATELOBBYRESPONSE:
                 return new UnwrappedPacketData(packetType, wrapper.getCreateLobbyResponse());
+
+            case JOINLOBBYREQUEST:
+                return new UnwrappedPacketData(packetType, wrapper.getJoinLobbyRequest());
+
+            case JOINLOBBYRESPONSE:
+                return new UnwrappedPacketData(packetType, wrapper.getJoinLobbyResponse());
+
+            case LEAVELOBBYREQUEST:
+                return new UnwrappedPacketData(packetType, wrapper.getLeaveLobbyRequest());
+
+            case LEAVELOBBYRESPONSE:
+                return new UnwrappedPacketData(packetType, wrapper.getLeaveLobbyResponse());
+
+            case KICKEDFROMLOBBY:
+                return new UnwrappedPacketData(packetType, wrapper.getKickedFromLobby());
 
             case KEEPALIVE:
                 return new UnwrappedPacketData(packetType, wrapper.getKeepAlive());
