@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -76,8 +75,7 @@ public class PacketManager {
                 } catch (Exception ex) {
                     log.error("Failed to process a {} packet from {} ({} bytes) " +
                                     "due to an internal error in the corresponding packet listener.",
-                            unwrappedPacketData.getPacketType(), senderAddr.getHostAddress(), packetData.length);
-                    log.error("Details:", ex);
+                            unwrappedPacketData.getPacketType(), senderAddr.getHostAddress(), packetData.length, ex);
                 }
             } else
                 // Protobuf смог десериализовать полученный пакет, но для него в listeners
@@ -87,8 +85,7 @@ public class PacketManager {
                         senderAddr.getHostAddress(), packetData.length);
         } catch (InvalidProtocolBufferException ex) {
             log.error("Ignoring invalid packet from {} ({} bytes).",
-                    senderAddr.getHostAddress(), packetData.length);
-            log.error("Details:", ex);
+                    senderAddr.getHostAddress(), packetData.length, ex);
         }
     }
 
@@ -96,17 +93,10 @@ public class PacketManager {
         try {
             byte[] data = PacketTransformer.wrap(packet);
             srv.getUdpServer().sendRaw(targetAddr, data);
-            System.out.println();
-            System.out.println("SEND " + data.length
-                    + " bytes TO " + targetAddr.getHostAddress() + ":");
-            System.out.println(Arrays.toString(data));
-            System.out.println();
-
             return true; // пакет отправлен успешно
         } catch (IOException ex) {
             log.error("Failed to send a {} packet to {}.",
-                    packet.getClass().getName(), targetAddr.getHostAddress());
-            log.error("Details:", ex);
+                    packet.getClass().getName(), targetAddr.getHostAddress(), ex);
 
             return false; // пакет отправить не удалось
         }

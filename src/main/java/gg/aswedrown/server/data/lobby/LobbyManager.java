@@ -1,11 +1,8 @@
 package gg.aswedrown.server.data.lobby;
 
-import gg.aswedrown.game.GameState;
 import gg.aswedrown.net.KickedFromLobby;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.Constraints;
-import gg.aswedrown.server.data.DatabaseCleaner;
-import gg.aswedrown.server.data.DbInfo;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -31,14 +28,7 @@ public class LobbyManager {
         this.repo = repo;
 
         // Запускаем периодическую чистку старых, ненужных данных.
-        new Timer().schedule(new DatabaseCleaner(
-                        srv.getDb(),
-                        DbInfo.Lobbies.COLLECTION_NAME,
-                        DbInfo.Lobbies.CREATION_DATE_TIME,
-                        srv.getConfig().getDbCleanerLobbiesMaxObjectLifespanMillis(),
-                        // Чтобы удалялись только комнаты, в которых ещё идёт ожидание игры:
-                        criteria -> criteria.append(DbInfo.Lobbies.GAME_STATE, GameState.LOBBY_STATE)
-                ),
+        new Timer().schedule(new LobbyCleaner(srv, srv.getDb()),
                 // Первым числом ставим 0 (задержка), чтобы чистка
                 // выполнялась в том числе сразу при запуске сервера.
                 0, srv.getConfig().getDbCleanerLobbiesCleanupPeriodMillis()
@@ -120,6 +110,13 @@ public class LobbyManager {
         log.info("Deleted lobby {}.", lobbyId);
     }
 
+    public boolean removeMember(int lobbyId, int targetPlayerId, @NonNull String targetPlayerAddrStr) {
+        boolean actuallyRemoved = repo.removeMember(lobbyId, targetPlayerId);
+        srv.getVirConManager().bulkSet(targetPlayerAddrStr, 0, 0, 0);
+
+        return actuallyRemoved;
+    }
+
     public boolean kickFromLobby(int lobbyId, int targetPlayerId) {
         // TODO: 26.04.2021 дать хостам возможность кикать других участников
         return false;
@@ -127,16 +124,13 @@ public class LobbyManager {
 
     private boolean kickFromLobby(int lobbyId, int targetPlayerId,
                                   @NonNull String targetPlayerAddrStr, int reason) {
-        boolean actuallyKicked = repo.removeMember(lobbyId, targetPlayerId);
+        boolean actuallyKicked = removeMember(lobbyId, targetPlayerId, targetPlayerAddrStr);
 
         if (actuallyKicked)
             log.info("Kicked player {} from lobby {} (reason: {}).",
                     targetPlayerId, lobbyId, reason);
 
-        srv.getVirConManager().bulkSet(targetPlayerAddrStr, 0, 0, 0);
-
         // Оповещаем игрока об исключении из комнаты.
-        // TODO: 26.04.2021 возможно, стоит вытеснить оповещения из ЭТОГО класса
         if (actuallyKicked) {
             try {
                 srv.getPacketManager().sendPacket(InetAddress.getByName(targetPlayerAddrStr),

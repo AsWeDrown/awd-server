@@ -1,8 +1,6 @@
 package gg.aswedrown.server.data.virtualconnection;
 
 import gg.aswedrown.server.AwdServer;
-import gg.aswedrown.server.data.DatabaseCleaner;
-import gg.aswedrown.server.data.DbInfo;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,14 +20,7 @@ public class VirtualConnectionManager {
         this.repo = repo;
 
         // Запускаем периодическую чистку старых, ненужных данных.
-        new Timer().schedule(new DatabaseCleaner(
-                        srv.getDb(),
-                        DbInfo.VirtualConnections.COLLECTION_NAME,
-                        DbInfo.VirtualConnections.LAST_PACKET_RECEIVED_DATE_TIME,
-                        srv.getConfig().getDbCleanerVirtualConnectionsMaxObjectLifespanMillis(),
-                        // Дополнительных критериев для удаления в данном случае нет:
-                        null
-                ),
+        new Timer().schedule(new VirtualConnectionCleaner(srv, srv.getDb()),
                 // Первым числом ставим 0 (задержка), чтобы чистка
                 // выполнялась в том числе сразу при запуске сервера.
                 0, srv.getConfig().getDbCleanerVirtualConnectionsCleanupPeriodMillis()

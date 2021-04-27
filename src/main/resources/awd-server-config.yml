@@ -47,7 +47,7 @@ dbCleanerLobbiesMaxObjectLifespanMillis: 1200000 # 20 минут
 dbCleanerLobbiesCleanupPeriodMillis: 600000 # 10 минут
 
 # Максимальное время жизни бездействующих виртуальных соединений.
-dbCleanerVirtualConnectionsMaxObjectLifespanMillis: 60000 # 1 минута
+dbCleanerVirtualConnectionsMaxObjectLifespanMillis: 240000 # 4 минуты
 
 # Периодичность чистки виртуальных соединений.
-dbCleanerVirtualConnectionsCleanupPeriodMillis: 30000 # 30 секунд
+dbCleanerVirtualConnectionsCleanupPeriodMillis: 120000 # 2 минуты
