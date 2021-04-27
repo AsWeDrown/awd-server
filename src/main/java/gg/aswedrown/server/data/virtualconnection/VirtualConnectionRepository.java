@@ -8,6 +8,8 @@ public interface VirtualConnectionRepository {
 
     void createVirtualConnection(@NonNull String addrStr);
 
+    void deleteVirtualConnection(@NonNull String addrStr);
+
     boolean virtualConnectionExists(@NonNull String addrStr);
 
     void setLastPacketReceivedDateTime(@NonNull String addrStr, long timestamp);

@@ -1,7 +1,7 @@
 package gg.aswedrown.server.data.virtualconnection;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.result.DeleteResult;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.DbInfo;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +31,20 @@ public class VirtualConnectionCleaner extends TimerTask {
                 DbInfo.VirtualConnections.LAST_PACKET_RECEIVED_DATE_TIME,
                 new Document("$lte", noOlderThan));
 
-        DeleteResult result = col.deleteMany(criteria);
+        FindIterable<Document> toDelete = col.find(criteria);
+        int deletedCount = 0;
 
-        if (result.wasAcknowledged() && result.getDeletedCount() > 0)
-            log.info("DB Cleaner: deleted {} inactive virtual connections.",
-                    result.getDeletedCount());
+        for (Document virConData : toDelete) {
+            // Используем именно VirtualConnectionManager для удаления, т.к. он позаботится о
+            // корректном "отключении" клиента (удалении его данных из памяти, например, Пингера).
+            deletedCount++;
+            srv.getVirConManager().closeVirtualConnection(
+                    virConData.getString(DbInfo.VirtualConnections.ADDR_STR));
+        }
+
+        if (deletedCount > 0)
+            log.info("DB Cleaner: closed {} inactive virtual connections.",
+                    deletedCount);
     }
 
 }

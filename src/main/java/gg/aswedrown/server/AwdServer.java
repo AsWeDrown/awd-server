@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.StandardCopyOption;
+import java.util.Timer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -55,6 +56,9 @@ public final class AwdServer {
 
     @Getter
     private PacketManager packetManager;
+
+    @Getter
+    private Pinger pinger;
 
     @Getter
     private UdpServer udpServer;
@@ -151,6 +155,10 @@ public final class AwdServer {
                 PacketWrapper.PacketCase.CREATELOBBYREQUEST, new CreateLobbyRequestListener(this),
                 PacketWrapper.PacketCase.KEEPALIVE, new KeepAliveListener(this)
         );
+
+        // Пингер (нет, блин, Понгер).
+        new Timer().schedule(pinger = new Pinger(this),
+                config.getPingPeriodMillis(), config.getPingPeriodMillis());
 
         // Сам UDP "сервер".
         udpServer = new AwdUdpServer(

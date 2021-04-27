@@ -67,8 +67,8 @@ message JoinLobbyRequest {
 }
 
 message JoinLobbyResponse {
-  int32              playerId          = 1;
-  map<int32, string> otherPlayers      = 2;
+  int32              playerId     = 1;
+  map<int32, string> otherPlayers = 2;
 }
 
 message LeaveLobbyRequest {
@@ -97,14 +97,29 @@ message KeepAlive {
 
 /*
 ---------------------------------------------------------------------------------------------------
+   ОБЩИЕ (GENERAL)
+---------------------------------------------------------------------------------------------------
+ */
+
+message Ping {
+  uint64 serverTime = 1;
+}
+
+message Pong {
+  uint64 clientTime = 1;
+}
+
+/*
+---------------------------------------------------------------------------------------------------
    ОБЁРТКА ВСЕХ ПАКЕТОВ
    Используется для идентификации пакетов при получении их в виде "сырого" массива байтов.
 ---------------------------------------------------------------------------------------------------
  */
 
 message PacketWrapper {
-  // Номера с    1 по  999 зарезервированы под пакеты предыгрового этапа (LOBBY STATE),
-  //        с 1000 по 9999               - под пакеты игрового этапа (PLAY STATE),
+  // Номера с     1 по   999 зарезервированы под пакеты предыгрового этапа (LOBBY STATE),
+  //        с  1000 по  9999               - под пакеты игрового этапа (PLAY STATE),
+  //        с 10000 по 99999               - под общие пакеты (GENERAL)
   //
   // ВАЖНО: внутри этого блока 'oneof packet {...}' запрещено использовать комментарии /* такого */ вида
   //        (в т.ч. многострочные - последовательность "/*" внутри этого блока не должно быть в любом виде).
@@ -113,23 +128,25 @@ message PacketWrapper {
     //   LOBBY STATE
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    HandshakeRequest handshakeRequest = 1;
-    HandshakeResponse handshakeResponse = 2;
-
-    CreateLobbyRequest createLobbyRequest =  100;
-    CreateLobbyResponse createLobbyResponse = 101;
-
-    JoinLobbyRequest joinLobbyRequest = 102;
-    JoinLobbyResponse joinLobbyResponse = 103;
-
-    LeaveLobbyRequest leaveLobbyRequest = 104;
-    LeaveLobbyResponse leaveLobbyResponse = 105;
-
-    KickedFromLobby kickedFromLobby = 106;
+    HandshakeRequest           handshakeRequest           =     1;
+    HandshakeResponse          handshakeResponse          =     2;
+    CreateLobbyRequest         createLobbyRequest         =   100;
+    CreateLobbyResponse        createLobbyResponse        =   101;
+    JoinLobbyRequest           joinLobbyRequest           =   102;
+    JoinLobbyResponse          joinLobbyResponse          =   103;
+    LeaveLobbyRequest          leaveLobbyRequest          =   104;
+    LeaveLobbyResponse         leaveLobbyResponse         =   105;
+    KickedFromLobby            kickedFromLobby            =   106;
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //   PLAY STATE
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    KeepAlive keepAlive = 1000;
+    KeepAlive                  keepAlive                  =  1000;
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //   GENERAL
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Ping                       ping                       = 10000;
+    Pong                       pong                       = 10001;
   }
 }

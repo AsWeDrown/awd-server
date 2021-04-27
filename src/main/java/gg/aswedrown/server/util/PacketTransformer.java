@@ -105,6 +105,14 @@ public final class PacketTransformer {
                 return PacketWrapper.newBuilder().setKeepAlive(
                         (KeepAlive) packet).build().toByteArray();
 
+            case PING:
+                return PacketWrapper.newBuilder().setPing(
+                        (Ping) packet).build().toByteArray();
+
+            case PONG:
+                return PacketWrapper.newBuilder().setPong(
+                        (Pong) packet).build().toByteArray();
+
             default:
                 // Код "case ..." для пакетов этого типа отсутствует выше.
                 // Нужно добавить! (исп. awd-ptrans-codegen)
@@ -148,6 +156,12 @@ public final class PacketTransformer {
 
             case KEEPALIVE:
                 return new UnwrappedPacketData(packetType, wrapper.getKeepAlive());
+
+            case PING:
+                return new UnwrappedPacketData(packetType, wrapper.getPing());
+
+            case PONG:
+                return new UnwrappedPacketData(packetType, wrapper.getPong());
 
             default:
                 // Неизвестный пакет - он будет проигнорирован (не передан никакому PacketListener'у).

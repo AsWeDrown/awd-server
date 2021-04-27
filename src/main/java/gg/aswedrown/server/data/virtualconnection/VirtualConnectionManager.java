@@ -4,6 +4,8 @@ import gg.aswedrown.server.AwdServer;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Timer;
 
 @Slf4j
@@ -27,14 +29,28 @@ public class VirtualConnectionManager {
         );
     }
 
-    public void openVirtualConnection(@NonNull String addrStr) {
+    public void openVirtualConnection(@NonNull InetAddress addr) {
+        String addrStr = addr.getHostAddress();
+
         if (isVirtuallyConnected(addrStr)) {
             resetLastPacketReceivedDateTime(addrStr);
             log.info("Virtual connection re-established: {}.", addrStr);
         } else {
             repo.createVirtualConnection(addrStr);
+            srv.getPinger().connectionEstablished(addr);
             log.info("Virtual connection established: {}.", addrStr);
         }
+    }
+
+    public void closeVirtualConnection(@NonNull String addrStr) {
+        try {
+            srv.getPinger().connectionClosed(InetAddress.getByName(addrStr));
+        } catch (UnknownHostException ex) {
+            log.error("Failed to close virtual connection properly: {} (unknown host).", addrStr);
+        }
+
+        repo.deleteVirtualConnection(addrStr);
+        log.info("Virtual connection closed: {}.", addrStr);
     }
 
     public boolean isVirtuallyConnected(@NonNull String addrStr) {

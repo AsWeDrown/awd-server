@@ -16,14 +16,19 @@ public class AwdServerConfig {
 
     private int
             schemaVersion,
+
             executorQueueCapacity,
             executorMaxThreads,
             executorThreadsKeepAliveSeconds,
+
             udpServerPort,
             udpServerBufferSize,
+
             dbCleanerLobbiesMaxObjectLifespanMillis,
             dbCleanerLobbiesCleanupPeriodMillis,
             dbCleanerVirtualConnectionsMaxObjectLifespanMillis,
-            dbCleanerVirtualConnectionsCleanupPeriodMillis;
+            dbCleanerVirtualConnectionsCleanupPeriodMillis,
+
+            pingPeriodMillis;
 
 }

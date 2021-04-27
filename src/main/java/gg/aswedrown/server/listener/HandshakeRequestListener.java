@@ -24,13 +24,12 @@ public class HandshakeRequestListener extends PacketListener<HandshakeRequest> {
 
     @Override
     protected void processPacket(InetAddress senderAddr, HandshakeRequest packet) throws Exception {
-        String addrStr = senderAddr.getHostAddress();
-
-        log.info("Protocol version of {} is {}.", addrStr, packet.getProtocolVersion());
+        log.info("Protocol version of {} is {}.",
+                senderAddr.getHostAddress(), packet.getProtocolVersion());
 
         if (packet.getProtocolVersion() == PacketManager.PROTOCOL_VERSION)
             // Всё хорошо, регистрируем "соединение".
-            srv.getVirConManager().openVirtualConnection(addrStr);
+            srv.getVirConManager().openVirtualConnection(senderAddr);
 
         // Возвращаем клиенту версию протокола на сервере.
         sendResponse(senderAddr);

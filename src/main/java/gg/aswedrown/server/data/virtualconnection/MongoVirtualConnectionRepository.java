@@ -27,6 +27,12 @@ public class MongoVirtualConnectionRepository implements VirtualConnectionReposi
     }
 
     @Override
+    public void deleteVirtualConnection(@NonNull String addrStr) {
+        db.deleteOne(DbInfo.VirtualConnections.COLLECTION_NAME,
+                     DbInfo.VirtualConnections.ADDR_STR, addrStr);
+    }
+
+    @Override
     public boolean virtualConnectionExists(@NonNull String addrStr) {
         return fetchVirtualConnectionData(addrStr) != null;
     }
