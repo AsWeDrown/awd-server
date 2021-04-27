@@ -4,9 +4,6 @@
         <console name="stdout" target="SYSTEM_OUT">
             <patternLayout pattern="[%d{HH:mm:ss}] %level: %msg%n"/>
         </console>
-<!--        <file name="logfile" fileName="awdsrv-latest.log" immediateFlush="true" append="false">-->
-<!--            <patternLayout pattern="[%d{dd/MM/YYYY HH:mm:ss.DDD}] [%t] %level: %msg%n"/>-->
-<!--        </file>-->
         <RollingFile name="dailyfile"
                      fileName="logs/latest.log"
                      filePattern="logs/%d{yyyy-MM-dd}.log.gz"
@@ -18,7 +15,7 @@
         </RollingFile>
     </appenders>
     <loggers>
-        <root level="debug">
+        <root level="info">
             <appenderRef ref="stdout"/>
             <appenderRef ref="dailyfile"/>
         </root>

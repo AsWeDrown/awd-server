@@ -27,7 +27,11 @@ public interface LobbyRepository {
 
     int getHost(int lobbyId);
 
-    Map<Integer, String> getMembers(int lobbyId);
+    Map<String, String> getMembers(int lobbyId);
+
+    int getGameState(int lobbyId);
+
+    void setGameState(int lobbyId, int gameState);
 
     Document fetchLobbyData(int lobbyId);
 

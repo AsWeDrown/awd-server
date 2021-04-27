@@ -16,7 +16,7 @@ public class CreateLobbyRequestListener extends PacketListener<CreateLobbyReques
     @Override
     protected void processPacket(InetAddress senderAddr, CreateLobbyRequest packet) throws Exception {
         LobbyManager.CreationResult result = srv.getLobbyManager()
-                .createNewLobby(senderAddr, packet.getPlayerName());
+                .createNewLobby(senderAddr.getHostAddress(), packet.getPlayerName());
 
         sendResponse(senderAddr, result);
     }

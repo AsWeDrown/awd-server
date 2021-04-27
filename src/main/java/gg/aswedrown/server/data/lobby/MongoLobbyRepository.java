@@ -1,5 +1,6 @@
 package gg.aswedrown.server.data.lobby;
 
+import gg.aswedrown.game.GameState;
 import gg.aswedrown.server.data.DbInfo;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -9,18 +10,21 @@ import org.bson.Document;
 import java.util.HashMap;
 import java.util.Map;
 
-// TODO: 26.04.2021 оптимизировать работу с БД (сейчас код удобный и простой, но с производительностью не очень)
 @RequiredArgsConstructor
 public class MongoLobbyRepository implements LobbyRepository {
 
+    @NonNull
     private final MongoManager db;
 
     @Override
     public void createLobby(int lobbyId, int hostPlayerId, @NonNull String hostPlayerName) {
-        Map<Integer, String> members = new HashMap<>();
-        members.put(hostPlayerId, hostPlayerName);
+        // Преобразовываем число ID в строку, т.к. в Mongo легче всего сохранять Map<String, String>.
+        // (Через обычную вставку Mongo сериализует именно в <String, String>, а вставлять поэлементно менее удобно.)
+        Map<String, String> members = new HashMap<>();
+        members.put(Integer.toString(hostPlayerId), hostPlayerName);
         Document doc = new Document(DbInfo.Lobbies.LOBBY_ID, lobbyId)
-                .append(DbInfo.Lobbies.CURRENT_STATE, LobbyState.LOBBY_STATE)
+                .append(DbInfo.Lobbies.CREATION_DATE_TIME, System.currentTimeMillis())
+                .append(DbInfo.Lobbies.GAME_STATE, GameState.LOBBY_STATE)
                 .append(DbInfo.Lobbies.HOST_PLAYER_ID, hostPlayerId)
                 .append(DbInfo.Lobbies.MEMBERS, members);
 
@@ -39,12 +43,14 @@ public class MongoLobbyRepository implements LobbyRepository {
 
     @Override
     public boolean addMember(int lobbyId, int playerId, @NonNull String playerName) {
-        Map<Integer, String> members = getMembers(lobbyId);
+        // См. коммент в методе createLobby - причина <String, String> вместо <Integer, String>.
+        Map<String, String> members = getMembers(lobbyId);
+        String playerIdStr = Integer.toString(playerId);
 
-        if (members.containsKey(playerId))
+        if (members.containsKey(playerIdStr))
             return false; // уже участник
         else {
-            members.put(playerId, playerName);
+            members.put(playerIdStr, playerName);
             db.updateOne(DbInfo.Lobbies.COLLECTION_NAME,
                     DbInfo.Lobbies.LOBBY_ID, lobbyId,
                     new Document(DbInfo.Lobbies.MEMBERS, members)
@@ -56,10 +62,12 @@ public class MongoLobbyRepository implements LobbyRepository {
 
     @Override
     public boolean removeMember(int lobbyId, int playerId) {
-        Map<Integer, String> members = getMembers(lobbyId);
+        // См. коммент в методе createLobby - причина <String, String> вместо <Integer, String>.
+        Map<String, String> members = getMembers(lobbyId);
+        String playerIdStr = Integer.toString(playerId);
 
-        if (members.containsKey(playerId)) {
-            members.remove(playerId);
+        if (members.containsKey(playerIdStr)) {
+            members.remove(playerIdStr);
             db.updateOne(DbInfo.Lobbies.COLLECTION_NAME,
                     DbInfo.Lobbies.LOBBY_ID, lobbyId,
                     new Document(DbInfo.Lobbies.MEMBERS, members)
@@ -72,7 +80,8 @@ public class MongoLobbyRepository implements LobbyRepository {
 
     @Override
     public boolean isMemberOf(int lobbyId, int playerId) {
-        return getMembers(lobbyId).containsKey(playerId);
+        // См. коммент в методе createLobby - причина <String, String> вместо <Integer, String>.
+        return getMembers(lobbyId).containsKey(Integer.toString(playerId));
     }
 
     @Override
@@ -81,8 +90,22 @@ public class MongoLobbyRepository implements LobbyRepository {
     }
 
     @Override
-    public Map<Integer, String> getMembers(int lobbyId) {
+    public Map<String, String> getMembers(int lobbyId) {
+        // См. коммент в методе createLobby - причина <String, String> вместо <Integer, String>.
         return fetchLobbyData(lobbyId).get(DbInfo.Lobbies.MEMBERS, Map.class);
+    }
+
+    @Override
+    public int getGameState(int lobbyId) {
+        return fetchLobbyData(lobbyId).getInteger(DbInfo.Lobbies.GAME_STATE);
+    }
+
+    @Override
+    public void setGameState(int lobbyId, int gameState) {
+        db.updateOne(DbInfo.Lobbies.COLLECTION_NAME,
+                DbInfo.Lobbies.LOBBY_ID, lobbyId,
+                new Document(DbInfo.Lobbies.GAME_STATE, gameState)
+        );
     }
 
     @Override

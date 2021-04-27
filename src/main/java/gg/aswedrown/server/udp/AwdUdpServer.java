@@ -53,6 +53,12 @@ public class AwdUdpServer implements UdpServer {
                 // байтов - "обрезаем" буффер до этого числа и получаем "реальный" пакет.
                 byte[] packetData = Arrays.copyOf(buffer, packet.getLength());
 
+                System.out.println();
+                System.out.println("RECV " + packetData.length
+                        + " bytes TO " + senderAddr.getHostAddress() + ":");
+                System.out.println(Arrays.toString(packetData));
+                System.out.println();
+
                 if (packetData.length > 0)
                     packetRecvExecService.execute(()
                             -> packetManager.receivePacket(senderAddr, packetData));

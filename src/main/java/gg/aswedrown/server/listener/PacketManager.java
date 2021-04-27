@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,10 +63,16 @@ public class PacketManager {
             unwrappedPacketData = PacketTransformer.unwrap(packetData);
 
             if (unwrappedPacketData != null) {
-                // Всё в порядке. Отправляем пакет на обработку соответствующему PacketListener'у.
                 try {
+                    // Кажется, всё в порядке. Отправляем пакет на обработку соответствующему PacketListener'у...
                     listeners.get(unwrappedPacketData.getPacketType())
                             .packetReceived(senderAddr, unwrappedPacketData.getPacket());
+
+                    // ...а также обновляем (сбрасываем) время успешного получения последнего пакета в данных об
+                    // этом виртуальном соединении. Важно делать это ПОСЛЕ обработки пакета PacketListener'ами,
+                    // т.к. в противном случае будет попытка обратиться к данным о виртуальном соединении, которых
+                    // ещё нет в базе данных (обработчик Handshake их ещё не создал).
+                    srv.getVirConManager().resetLastPacketReceivedDateTime(senderAddr.getHostAddress());
                 } catch (Exception ex) {
                     log.error("Failed to process a {} packet from {} ({} bytes) " +
                                     "due to an internal error in the corresponding packet listener.",
@@ -89,6 +96,11 @@ public class PacketManager {
         try {
             byte[] data = PacketTransformer.wrap(packet);
             srv.getUdpServer().sendRaw(targetAddr, data);
+            System.out.println();
+            System.out.println("SEND " + data.length
+                    + " bytes TO " + targetAddr.getHostAddress() + ":");
+            System.out.println(Arrays.toString(data));
+            System.out.println();
 
             return true; // пакет отправлен успешно
         } catch (IOException ex) {

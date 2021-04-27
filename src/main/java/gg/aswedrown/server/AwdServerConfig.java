@@ -8,14 +8,22 @@ public class AwdServerConfig {
 
     static final transient String FILE_NAME = "awd-server-config.yml";
 
-    private int executorQueueCapacity;
+    /**
+     * TODO - менять каждый раз при добавлении новых полей или удалении старых
+     *        (чтобы сервер просигнализировал о необходимости обновить файл).
+     */
+    static final transient int SCHEMA_VERSION = 1;
 
-    private int executorMaxThreads;
-
-    private int executorThreadsKeepAliveSeconds;
-
-    private int udpServerPort;
-
-    private int udpServerBufferSize;
+    private int
+            schemaVersion,
+            executorQueueCapacity,
+            executorMaxThreads,
+            executorThreadsKeepAliveSeconds,
+            udpServerPort,
+            udpServerBufferSize,
+            dbCleanerLobbiesMaxObjectLifespanMillis,
+            dbCleanerLobbiesCleanupPeriodMillis,
+            dbCleanerVirtualConnectionsMaxObjectLifespanMillis,
+            dbCleanerVirtualConnectionsCleanupPeriodMillis;
 
 }

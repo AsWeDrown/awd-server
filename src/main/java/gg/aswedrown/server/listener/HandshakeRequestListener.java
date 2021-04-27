@@ -26,11 +26,11 @@ public class HandshakeRequestListener extends PacketListener<HandshakeRequest> {
     protected void processPacket(InetAddress senderAddr, HandshakeRequest packet) throws Exception {
         String addrStr = senderAddr.getHostAddress();
 
-        log.debug("Protocol version of {} is {}.", addrStr, packet.getProtocolVersion());
+        log.info("Protocol version of {} is {}.", addrStr, packet.getProtocolVersion());
 
         if (packet.getProtocolVersion() == PacketManager.PROTOCOL_VERSION)
-            // Всё хорошо, регистрируем новое "соединение".
-            srv.handleNewConnection(senderAddr, addrStr);
+            // Всё хорошо, регистрируем "соединение".
+            srv.getVirConManager().openVirtualConnection(addrStr);
 
         // Возвращаем клиенту версию протокола на сервере.
         sendResponse(senderAddr);

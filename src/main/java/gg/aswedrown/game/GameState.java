@@ -1,8 +1,8 @@
-package gg.aswedrown.server.data.lobby;
+package gg.aswedrown.game;
 
-public final class LobbyState {
+public final class GameState {
 
-    private LobbyState() {}
+    private GameState() {}
 
     /**
      * Предыгровой этап.
