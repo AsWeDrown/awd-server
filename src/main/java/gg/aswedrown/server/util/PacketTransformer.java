@@ -101,6 +101,10 @@ public final class PacketTransformer {
                 return PacketWrapper.newBuilder().setKickedFromLobby(
                         (KickedFromLobby) packet).build().toByteArray();
 
+            case UPDATEDMEMBERSLIST:
+                return PacketWrapper.newBuilder().setUpdatedMembersList(
+                        (UpdatedMembersList) packet).build().toByteArray();
+
             case KEEPALIVE:
                 return PacketWrapper.newBuilder().setKeepAlive(
                         (KeepAlive) packet).build().toByteArray();
@@ -153,6 +157,9 @@ public final class PacketTransformer {
 
             case KICKEDFROMLOBBY:
                 return new UnwrappedPacketData(packetType, wrapper.getKickedFromLobby());
+
+            case UPDATEDMEMBERSLIST:
+                return new UnwrappedPacketData(packetType, wrapper.getUpdatedMembersList());
 
             case KEEPALIVE:
                 return new UnwrappedPacketData(packetType, wrapper.getKeepAlive());

@@ -6,10 +6,15 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class VirtualConnectionManager {
+
+    private final Map<InetAddress, Long> lastLatency = new ConcurrentHashMap<>();
 
     @NonNull
     private final AwdServer srv;
@@ -29,36 +34,49 @@ public class VirtualConnectionManager {
         );
     }
 
+    public Set<InetAddress> getOpenVirtualConnections() {
+        return lastLatency.keySet();
+    }
+
     public void openVirtualConnection(@NonNull InetAddress addr) {
         String addrStr = addr.getHostAddress();
 
         if (isVirtuallyConnected(addrStr)) {
-            resetLastPacketReceivedDateTime(addrStr);
+            updatePongLatency(addr, 0L); // сбрасываем пинг И ВРЕМЯ ПОЛУЧЕНИЯ ПОСЛЕДНЕГО ПАКЕТА PONG
             log.info("Virtual connection re-established: {}.", addrStr);
         } else {
             repo.createVirtualConnection(addrStr);
-            srv.getPinger().connectionEstablished(addr);
+            lastLatency.put(addr, 0L); // ПРОСТО сбрасываем пинг
             log.info("Virtual connection established: {}.", addrStr);
         }
     }
 
     public void closeVirtualConnection(@NonNull String addrStr) {
         try {
-            srv.getPinger().connectionClosed(InetAddress.getByName(addrStr));
+            lastLatency.remove(InetAddress.getByName(addrStr));
         } catch (UnknownHostException ex) {
             log.error("Failed to close virtual connection properly: {} (unknown host).", addrStr);
         }
 
         repo.deleteVirtualConnection(addrStr);
-        log.info("Virtual connection closed: {}.", addrStr);
+        log.info("Virtual connection closed: {}. " +
+                "There are now {} addresses in memory.", addrStr, lastLatency.size());
     }
 
     public boolean isVirtuallyConnected(@NonNull String addrStr) {
         return repo.virtualConnectionExists(addrStr);
     }
 
-    public void resetLastPacketReceivedDateTime(@NonNull String addrStr) {
-        repo.setLastPacketReceivedDateTime(addrStr, System.currentTimeMillis());
+    public long getAverageLatency() {
+        return (long) lastLatency.values().stream()
+                .mapToLong(Long::longValue)
+                .average()
+                .orElse(0.0);
+    }
+
+    public void updatePongLatency(@NonNull InetAddress addr, long latency) {
+        lastLatency.put(addr, latency);
+        repo.setLastPongDateTime(addr.getHostAddress(), System.currentTimeMillis());
     }
 
     public int getCurrentlyHostedLobbyId(@NonNull String addrStr) {

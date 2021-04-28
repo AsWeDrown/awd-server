@@ -29,10 +29,9 @@ public class LobbyCleaner extends TimerTask {
         MongoCollection<Document> col = db
                 .getCollection(DbInfo.Lobbies.COLLECTION_NAME);
         Document criteria = new Document(
-                DbInfo.Lobbies.CREATION_DATE_TIME,
-                new Document("$lte", noOlderThan)
-                        // ...но только те, что неактивны (комната всё ещё на предыгровом этапе).
-                        .append(DbInfo.Lobbies.GAME_STATE, GameState.LOBBY_STATE));
+                DbInfo.Lobbies.CREATION_DATE_TIME, new Document("$lte", noOlderThan))
+                // ...но только те, что неактивны (комната всё ещё на предыгровом этапе).
+                .append(DbInfo.Lobbies.GAME_STATE, GameState.LOBBY_STATE);
 
         FindIterable<Document> toDelete = col.find(criteria);
         int deletedCount = 0;

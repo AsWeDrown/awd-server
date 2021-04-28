@@ -12,7 +12,7 @@ public interface VirtualConnectionRepository {
 
     boolean virtualConnectionExists(@NonNull String addrStr);
 
-    void setLastPacketReceivedDateTime(@NonNull String addrStr, long timestamp);
+    void setLastPongDateTime(@NonNull String addrStr, long timestamp);
     
     int getCurrentlyHostedLobbyId(@NonNull String addrStr);
 

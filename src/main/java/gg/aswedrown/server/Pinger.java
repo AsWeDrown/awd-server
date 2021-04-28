@@ -1,55 +1,35 @@
 package gg.aswedrown.server;
 
+import gg.aswedrown.net.Ping;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
 
+@Slf4j
 @RequiredArgsConstructor
 public class Pinger extends TimerTask {
-
-    private final Object lock = new Object();
-
-    private final Map<InetAddress, Long> lastLatency = new HashMap<>();
 
     @NonNull
     private final AwdServer srv;
 
     @Override
     public void run() {
-        synchronized (lock) {
-            // TODO: 27.04.2021
-        }
-    }
+        Set<InetAddress> virConns = srv.getVirConManager().getOpenVirtualConnections();
 
-    public void connectionEstablished(@NonNull InetAddress addr) {
-        synchronized (lock) {
-            lastLatency.put(addr, 0L);
-        }
-    }
+        if (!virConns.isEmpty()) {
+            log.info("Pinging {} virtually connected clients.", virConns.size());
 
-    public void connectionClosed(@NonNull InetAddress addr) {
-        synchronized (lock) {
-            lastLatency.remove(addr);
-        }
-    }
-
-    public Long getLastLatency(@NonNull InetAddress addr) {
-        synchronized (lock) {
-            return lastLatency.get(addr);
-        }
-    }
-
-    public long getMeanLatency() {
-        synchronized (lock) {
-            return (long) lastLatency.values()
-                    .stream()
-                    .mapToLong(Long::longValue)
-                    .average()
-                    .orElse(0.0);
+            for (InetAddress addr : virConns) {
+                // Для каждого клиента устанавливаем "своё" время (currentTimeMillis), т.к.
+                // отправка пакета может занять некоторое время, что визуально сделает пинг
+                // клиентов зависимым от того, в каком порядке им был отправлен пакет Ping.
+                Ping pingPacket = Ping.newBuilder().setServerTime(System.currentTimeMillis()).build();
+                srv.getPacketManager().sendPacket(addr, pingPacket);
+            }
         }
     }
 

@@ -18,7 +18,7 @@ public class MongoVirtualConnectionRepository implements VirtualConnectionReposi
     @Override
     public void createVirtualConnection(@NonNull String addrStr) {
         Document doc = new Document(DbInfo.VirtualConnections.ADDR_STR, addrStr)
-                .append(DbInfo.VirtualConnections.LAST_PACKET_RECEIVED_DATE_TIME, System.currentTimeMillis())
+                .append(DbInfo.VirtualConnections.LAST_PONG_DATE_TIME, System.currentTimeMillis())
                 .append(DbInfo.VirtualConnections.CURRENTLY_HOSTED_LOBBY_ID, 0)
                 .append(DbInfo.VirtualConnections.CURRENTLY_JOINED_LOBBY_ID, 0)
                 .append(DbInfo.VirtualConnections.CURRENT_LOCAL_PLAYER_ID, 0);
@@ -38,10 +38,10 @@ public class MongoVirtualConnectionRepository implements VirtualConnectionReposi
     }
 
     @Override
-    public void setLastPacketReceivedDateTime(@NonNull String addrStr, long timestamp) {
+    public void setLastPongDateTime(@NonNull String addrStr, long timestamp) {
         db.updateOne(DbInfo.VirtualConnections.COLLECTION_NAME,
                 DbInfo.VirtualConnections.ADDR_STR, addrStr,
-                new Document(DbInfo.VirtualConnections.LAST_PACKET_RECEIVED_DATE_TIME, timestamp)
+                new Document(DbInfo.VirtualConnections.LAST_PONG_DATE_TIME, timestamp)
         );
     }
 

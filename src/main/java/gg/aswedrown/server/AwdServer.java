@@ -1,15 +1,11 @@
 package gg.aswedrown.server;
 
-import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.data.DbInfo;
 import gg.aswedrown.server.data.lobby.LobbyManager;
 import gg.aswedrown.server.data.lobby.MongoLobbyRepository;
 import gg.aswedrown.server.data.virtualconnection.MongoVirtualConnectionRepository;
 import gg.aswedrown.server.data.virtualconnection.VirtualConnectionManager;
-import gg.aswedrown.server.listener.CreateLobbyRequestListener;
-import gg.aswedrown.server.listener.HandshakeRequestListener;
-import gg.aswedrown.server.listener.KeepAliveListener;
-import gg.aswedrown.server.listener.PacketManager;
+import gg.aswedrown.server.packetlistener.PacketManager;
 import gg.aswedrown.server.udp.AwdUdpServer;
 import gg.aswedrown.server.udp.UdpServer;
 import lombok.Getter;
@@ -149,12 +145,8 @@ public final class AwdServer {
     }
 
     private void startUdpSocketServer() throws SocketException {
-        // Обработчики пакетов.
-        packetManager = new PacketManager(this,
-                PacketWrapper.PacketCase.HANDSHAKEREQUEST, new HandshakeRequestListener(this),
-                PacketWrapper.PacketCase.CREATELOBBYREQUEST, new CreateLobbyRequestListener(this),
-                PacketWrapper.PacketCase.KEEPALIVE, new KeepAliveListener(this)
-        );
+        // Менеджер и обработчики пакетов.
+        packetManager = new PacketManager(this);
 
         // Пингер (нет, блин, Понгер).
         new Timer().schedule(pinger = new Pinger(this),
@@ -168,6 +160,7 @@ public final class AwdServer {
                 packetManager
         );
 
+        // Запускает в ТЕКУЩЕМ ПОТОКЕ (блокирующе!)!
         udpServer.start();
     }
 

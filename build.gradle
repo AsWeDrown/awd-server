@@ -49,6 +49,7 @@ def log4jVersion = '2.14.1'
 
 dependencies {
     compile group: 'me.darksidecode.kantanj', name: 'kantanj', version: '1.0.2'
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.12'
     compile group: 'org.mongodb', name: 'mongodb-driver-legacy', version: '3.12.8'
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.15.8'
     compile group: 'org.yaml', name: 'snakeyaml', version: '1.28'

@@ -56,19 +56,22 @@ dbCleanerLobbiesMaxObjectLifespanMillis: 1200000 # 20 минут
 dbCleanerLobbiesCleanupPeriodMillis: 600000 # 10 минут
 
 # Максимальное время жизни бездействующих виртуальных соединений.
-dbCleanerVirtualConnectionsMaxObjectLifespanMillis: 240000 # 4 минуты
+dbCleanerVirtualConnectionsMaxObjectLifespanMillis: 60000 # 1 минута
 
 # Периодичность чистки виртуальных соединений.
-dbCleanerVirtualConnectionsCleanupPeriodMillis: 120000 # 2 минуты
+dbCleanerVirtualConnectionsCleanupPeriodMillis: 30000 # 30 секунд
 
 
 
 
 #############################################################################################################
 #
-#   ИГРОВОЙ СЕРВЕР
+#   ИГРА
 #
 #############################################################################################################
+
+# Максимальное количество игроков в игровой комнате.
+maxLobbySize: 4
 
 # Частота отправки пакетов Ping всем активным клиентам (для поддержания виртуального соединения).
 pingPeriodMillis: 3000

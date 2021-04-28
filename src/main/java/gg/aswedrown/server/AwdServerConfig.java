@@ -29,6 +29,7 @@ public class AwdServerConfig {
             dbCleanerVirtualConnectionsMaxObjectLifespanMillis,
             dbCleanerVirtualConnectionsCleanupPeriodMillis,
 
+            maxLobbySize,
             pingPeriodMillis;
 
 }

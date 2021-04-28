@@ -28,7 +28,7 @@ public class VirtualConnectionCleaner extends TimerTask {
         MongoCollection<Document> col = db
                 .getCollection(DbInfo.VirtualConnections.COLLECTION_NAME);
         Document criteria = new Document(
-                DbInfo.VirtualConnections.LAST_PACKET_RECEIVED_DATE_TIME,
+                DbInfo.VirtualConnections.LAST_PONG_DATE_TIME,
                 new Document("$lte", noOlderThan));
 
         FindIterable<Document> toDelete = col.find(criteria);

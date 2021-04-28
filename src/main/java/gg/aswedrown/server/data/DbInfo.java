@@ -15,11 +15,11 @@ public final class DbInfo {
 
         public static final String COLLECTION_NAME = "virtualConnections";
 
-        public static final String ADDR_STR                       = "_id"; /* Mongo ID */
-        public static final String LAST_PACKET_RECEIVED_DATE_TIME = "lastPacketReceivedDateTime";
-        public static final String CURRENTLY_HOSTED_LOBBY_ID      = "currentlyHostedLobbyId";
-        public static final String CURRENTLY_JOINED_LOBBY_ID      = "currentlyJoinedLobbyId";
-        public static final String CURRENT_LOCAL_PLAYER_ID        = "currentLocalPlayerId";
+        public static final String ADDR_STR                  = "_id"; /* Mongo ID */
+        public static final String LAST_PONG_DATE_TIME       = "lastPongDateTime";
+        public static final String CURRENTLY_HOSTED_LOBBY_ID = "currentlyHostedLobbyId";
+        public static final String CURRENTLY_JOINED_LOBBY_ID = "currentlyJoinedLobbyId";
+        public static final String CURRENT_LOCAL_PLAYER_ID   = "currentLocalPlayerId";
     }
 
     /**

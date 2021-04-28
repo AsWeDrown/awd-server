@@ -1,12 +1,14 @@
-package gg.aswedrown.server.listener;
+package gg.aswedrown.server.packetlistener;
 
 import gg.aswedrown.net.CreateLobbyRequest;
 import gg.aswedrown.net.CreateLobbyResponse;
+import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.lobby.LobbyManager;
 
 import java.net.InetAddress;
 
+@RegisterPacketListener (PacketWrapper.PacketCase.CREATELOBBYREQUEST)
 public class CreateLobbyRequestListener extends PacketListener<CreateLobbyRequest> {
 
     public CreateLobbyRequestListener(AwdServer srv) {

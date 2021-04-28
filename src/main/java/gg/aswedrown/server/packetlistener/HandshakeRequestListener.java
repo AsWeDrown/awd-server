@@ -1,13 +1,15 @@
-package gg.aswedrown.server.listener;
+package gg.aswedrown.server.packetlistener;
 
 import gg.aswedrown.net.HandshakeRequest;
 import gg.aswedrown.net.HandshakeResponse;
+import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.AwdServer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
 
 @Slf4j
+@RegisterPacketListener (PacketWrapper.PacketCase.HANDSHAKEREQUEST)
 public class HandshakeRequestListener extends PacketListener<HandshakeRequest> {
 
     private final HandshakeResponse commonResponse;

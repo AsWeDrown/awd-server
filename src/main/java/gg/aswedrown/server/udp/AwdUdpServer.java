@@ -1,6 +1,6 @@
 package gg.aswedrown.server.udp;
 
-import gg.aswedrown.server.listener.PacketManager;
+import gg.aswedrown.server.packetlistener.PacketManager;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
