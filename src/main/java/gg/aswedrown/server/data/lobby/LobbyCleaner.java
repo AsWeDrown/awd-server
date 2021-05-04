@@ -23,9 +23,7 @@ public class LobbyCleaner extends TimerTask {
     @Override
     public void run() {
         // Удаляем документы старее этого времени...
-        long noOlderThan = System.currentTimeMillis() - srv.getConfig()
-                .getDbCleanerLobbiesMaxObjectLifespanMillis();
-
+        long noOlderThan = System.currentTimeMillis() - srv.getConfig().getCleanerLobbiesMaxIdleMillis();
         MongoCollection<Document> col = db
                 .getCollection(DbInfo.Lobbies.COLLECTION_NAME);
         Document criteria = new Document(
@@ -45,8 +43,7 @@ public class LobbyCleaner extends TimerTask {
         }
 
         if (deletedCount > 0)
-            log.info("DB Cleaner: deleted {} inactive lobbies.",
-                    deletedCount);
+            log.info("Cleaner: deleted {} inactive lobbies.", deletedCount);
     }
 
 }

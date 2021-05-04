@@ -3,11 +3,11 @@ package gg.aswedrown.server;
 import gg.aswedrown.server.data.DbInfo;
 import gg.aswedrown.server.data.lobby.LobbyManager;
 import gg.aswedrown.server.data.lobby.MongoLobbyRepository;
-import gg.aswedrown.server.data.virtualconnection.MongoVirtualConnectionRepository;
-import gg.aswedrown.server.data.virtualconnection.VirtualConnectionManager;
-import gg.aswedrown.server.packetlistener.PacketManager;
+import gg.aswedrown.net.PacketManager;
 import gg.aswedrown.server.udp.AwdUdpServer;
 import gg.aswedrown.server.udp.UdpServer;
+import gg.aswedrown.vircon.Pinger;
+import gg.aswedrown.vircon.VirtualConnectionManager;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import me.darksidecode.kantanj.db.mongo.MongoManager;
@@ -51,6 +51,9 @@ public final class AwdServer {
     private VirtualConnectionManager virConManager;
 
     @Getter
+    private NetworkService netService;
+
+    @Getter
     private PacketManager packetManager;
 
     @Getter
@@ -70,6 +73,7 @@ public final class AwdServer {
         setupExecutor();
         setupShutdownHook();
         setupDatabase();
+        setupVirtualConnectivity();
 
         double startupTookSeconds = (System.currentTimeMillis() - startupBeginTime) / 1000.0D;
         log.info("Startup done! Everything took {} s.", String.format("%.2f", startupTookSeconds));
@@ -127,7 +131,11 @@ public final class AwdServer {
         // TODO: 26.04.2021 оптимизировать работу с БД
         //  (сейчас код удобный и простой, но с производительностью не очень)
         lobbyManager = new LobbyManager(this, new MongoLobbyRepository(db));
-        virConManager = new VirtualConnectionManager(this, new MongoVirtualConnectionRepository(db));
+    }
+
+    private void setupVirtualConnectivity() {
+        virConManager = new VirtualConnectionManager(this);
+        netService = new NetworkService();
     }
 
     private void setupShutdownHook() {
@@ -157,6 +165,7 @@ public final class AwdServer {
                 config.getUdpServerPort(),
                 config.getUdpServerBufferSize(),
                 executor,
+                virConManager,
                 packetManager
         );
 

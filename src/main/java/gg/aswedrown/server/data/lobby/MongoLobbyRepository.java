@@ -42,6 +42,25 @@ public class MongoLobbyRepository implements LobbyRepository {
     }
 
     @Override
+    public boolean updateMemberName(int lobbyId, int playerId, @NonNull String newPlayerName) {
+        // См. коммент в методе createLobby - причина <String, String> вместо <Integer, String>.
+        Map<String, String> members = getMembers(lobbyId);
+        String playerIdStr = Integer.toString(playerId);
+
+        if (members.containsKey(playerIdStr)) {
+            members.put(playerIdStr, newPlayerName);
+
+            db.updateOne(DbInfo.Lobbies.COLLECTION_NAME,
+                    DbInfo.Lobbies.LOBBY_ID, lobbyId,
+                    new Document(DbInfo.Lobbies.MEMBERS, members)
+            );
+
+            return true; // имя успешно обновлено
+        } else
+            return false; // в этой комнате нет такого участника
+    }
+
+    @Override
     public boolean addMember(int lobbyId, int playerId, @NonNull String playerName) {
         // См. коммент в методе createLobby - причина <String, String> вместо <Integer, String>.
         Map<String, String> members = getMembers(lobbyId);

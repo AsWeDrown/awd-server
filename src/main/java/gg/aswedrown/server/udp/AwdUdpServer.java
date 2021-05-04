@@ -1,6 +1,7 @@
 package gg.aswedrown.server.udp;
 
-import gg.aswedrown.server.packetlistener.PacketManager;
+import gg.aswedrown.net.PacketManager;
+import gg.aswedrown.vircon.VirtualConnectionManager;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,9 @@ public class AwdUdpServer implements UdpServer {
 
     @NonNull
     private final ExecutorService packetRecvExecService;
+
+    @NonNull
+    private final VirtualConnectionManager virConManager;
 
     @NonNull
     private final PacketManager packetManager;
@@ -53,10 +57,14 @@ public class AwdUdpServer implements UdpServer {
                 // байтов - "обрезаем" буффер до этого числа и получаем "реальный" пакет.
                 byte[] packetData = Arrays.copyOf(buffer, packet.getLength());
 
-                if (packetData.length > 0)
-                    packetRecvExecService.execute(()
-                            -> packetManager.receivePacket(senderAddr, packetData));
-                else
+                if (packetData.length > 0) {
+                    packetRecvExecService.execute(() ->
+                            packetManager.receivePacket(
+                                    virConManager.getVirtualConnection(senderAddr),
+                                    packetData
+                            )
+                    );
+                } else
                     log.warn("Ignoring empty packet from {}.", senderAddr.getHostAddress());
             } catch (IOException ex) {
                 log.error("Failed to receive a UDP packet.", ex);

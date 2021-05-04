@@ -1,16 +1,13 @@
 package gg.aswedrown.server.data.lobby;
 
-import gg.aswedrown.net.KickedFromLobby;
-import gg.aswedrown.net.UpdatedMembersList;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.Constraints;
+import gg.aswedrown.vircon.VirtualConnection;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -33,54 +30,68 @@ public class LobbyManager {
         new Timer().schedule(new LobbyCleaner(srv, srv.getDb()),
                 // Первым числом ставим 0 (задержка), чтобы чистка
                 // выполнялась в том числе сразу при запуске сервера.
-                0, srv.getConfig().getDbCleanerLobbiesCleanupPeriodMillis()
+                0, srv.getConfig().getCleanerLobbiesCleanupPeriodMillis()
         );
     }
 
-    public CreationResult createNewLobby(@NonNull String creatorAddrStr,
+    public CreationResult createNewLobby(@NonNull VirtualConnection virCon,
                                          @NonNull String creatorPlayerName) {
-        try {
-            if (!srv.getVirConManager().isVirtuallyConnected(creatorAddrStr))
-                return CreationResult.UNAUTHORIZED;
+        if (!virCon.isAuthorized())
+            return CreationResult.UNAUTHORIZED;
 
+        try {
             if (!creatorPlayerName.matches(Constraints.PLAYER_NAME_PATTERN))
                 return CreationResult.BAD_PLAYER_NAME;
 
-            if (srv.getVirConManager().getCurrentlyJoinedLobbyId(creatorAddrStr) != 0)
+            int curJoinedLobbyId = virCon.getCurrentlyJoinedLobbyId();
+            int curHostedLobbyId = virCon.getCurrentlyHostedLobbyId();
+
+            if (curJoinedLobbyId != 0 && curJoinedLobbyId != curHostedLobbyId)
                 // Этот игрок уже состоит в другой комнате, в которой он не является хостом.
                 return CreationResult.ALREADY_JOINED_ANOTHER_LOBBY;
-
-            int curHostedLobbyId = srv.getVirConManager().getCurrentlyHostedLobbyId(creatorAddrStr);
-
-            if (curHostedLobbyId == 0) {
+            else if (curHostedLobbyId == 0) {
                 // У этого игрока ещё нет созданных комнат. Создаём.
                 int newLobbyId = generateNewLobbyId();
                 int localPlayerId = generateNewLocalPlayerId(newLobbyId, true); // ID игрока-хоста
 
                 repo.createLobby(newLobbyId, localPlayerId, creatorPlayerName);
-                srv.getVirConManager().bulkSet(creatorAddrStr, newLobbyId, newLobbyId, localPlayerId);
+
+                virCon.setCurrentlyHostedLobbyId(newLobbyId);
+                virCon.setCurrentlyJoinedLobbyId(newLobbyId);
+                virCon.setCurrentLocalPlayerId(localPlayerId);
+
                 log.info("Created lobby {} (host: {}#{}).", newLobbyId, creatorPlayerName, localPlayerId);
 
                 return new CreationResult(newLobbyId, localPlayerId);
-            } else
+            } else {
                 // Этот игрок уже является создателем некоторой комнаты. Возвращаем её данные.
-                return new CreationResult(curHostedLobbyId,
-                        srv.getVirConManager().getCurrentLocalPlayerId(creatorAddrStr));
+                int registeredHostId = virCon.getCurrentLocalPlayerId();
+                String originalName = repo.getMembers(curHostedLobbyId)
+                        .get(Integer.toString(registeredHostId));
+
+                if (!creatorPlayerName.equals(originalName))
+                    // Игрок "переприсоединился" к комнате с другим именем. Устанавливаем новое имя в БД.
+                    if (!repo.updateMemberName(curHostedLobbyId, registeredHostId, creatorPlayerName))
+                        // Обновить имя не получилось. Что-то здесь не так...
+                        return CreationResult.FORBIDDEN;
+
+                return new CreationResult(curHostedLobbyId, registeredHostId);
+            }
         } catch (Exception ex) {
             log.error("Unhandled exception in createNewLobby:", ex);
             return CreationResult.INTERNAL_ERROR;
         }
     }
 
-    public JoinResult joinToLobby(@NonNull String addrStr, int lobbyId, @NonNull String playerName) {
-        try {
-            if (!srv.getVirConManager().isVirtuallyConnected(addrStr))
-                return JoinResult.UNAUTHORIZED;
+    public JoinResult joinToLobby(@NonNull VirtualConnection virCon, int lobbyId, @NonNull String playerName) {
+        if (!virCon.isAuthorized())
+            return JoinResult.UNAUTHORIZED;
 
+        try {
             if (!playerName.matches(Constraints.PLAYER_NAME_PATTERN))
                 return JoinResult.BAD_PLAYER_NAME;
 
-            int curJoinedLobby = srv.getVirConManager().getCurrentlyJoinedLobbyId(addrStr);
+            int curJoinedLobby = virCon.getCurrentlyJoinedLobbyId();
 
             if (curJoinedLobby != 0)
                 // Этот игрок уже состоит в какой-то комнате.
@@ -98,7 +109,7 @@ public class LobbyManager {
 
             // Если дошли до этого момента, то всё ок. Добавляем игрока в комнату.
             int playerId = generateNewLocalPlayerId(lobbyId, false);
-            boolean added = addMember(lobbyId, playerId, playerName, addrStr);
+            boolean added = addMember(lobbyId, playerId, playerName, virCon);
 
             if (added) {
                 notifyMembersListUpdated(lobbyId, playerId);
@@ -113,32 +124,124 @@ public class LobbyManager {
         }
     }
 
-    public int leaveFromLobby(@NonNull String addrStr, int lobbyId, int playerId) {
-        if (!srv.getVirConManager().isVirtuallyConnected(addrStr))
+    public int leaveFromLobby(@NonNull VirtualConnection virCon, int lobbyId, int playerId) {
+        if (!virCon.isAuthorized())
             return LeaveResult.UNAUTHORIZED;
 
-        int curJoinedLobby = srv.getVirConManager().getCurrentlyJoinedLobbyId(addrStr);
-        int curLocalPlayerId = srv.getVirConManager().getCurrentLocalPlayerId(addrStr);
+        try {
+            int curJoinedLobby = virCon.getCurrentlyJoinedLobbyId();
+            int curLocalPlayerId = virCon.getCurrentLocalPlayerId();
 
-        if (curJoinedLobby != lobbyId || curLocalPlayerId != playerId)
-            return LeaveResult.DENIED;
+            if (curJoinedLobby != lobbyId || curLocalPlayerId != playerId)
+                return LeaveResult.DENIED;
 
-        // Исключаем.
-        boolean removed = removeMember(lobbyId, playerId, addrStr);
+            // Исключаем.
+            boolean removed = removeMember(lobbyId, playerId, virCon);
 
-        if (removed) {
-            notifyMembersListUpdated(lobbyId);
-            log.info("Player {} left lobby {}.", playerId, lobbyId);
+            if (removed) {
+                notifyMembersListUpdated(lobbyId);
+                log.info("Player {} left lobby {}.", playerId, lobbyId);
 
-            return LeaveResult.SUCCESS;
-        } else
-            return LeaveResult.DENIED;
+                return LeaveResult.SUCCESS;
+            } else
+                return LeaveResult.DENIED;
+        } catch (Exception ex) {
+            log.error("Unhandled exception in leaveFromLobby:", ex);
+            return LeaveResult.INTERNAL_ERROR;
+        }
     }
 
     private Map<Integer, String> convertMembersMap(@NonNull Map<String, String> strToStrMap) {
         Map<Integer, String> intToStrMap = new HashMap<>();
         strToStrMap.forEach((k, v) -> intToStrMap.put(Integer.parseInt(k), v));
         return intToStrMap;
+    }
+
+    public void deleteLobby(int lobbyId) {
+        Map<String, String> members = repo.getMembers(lobbyId);
+
+        for (String playerIdStr : members.keySet()) {
+            int playerId = Integer.parseInt(playerIdStr);
+            VirtualConnection virCon = srv.getVirConManager()
+                    .resolveVirtualConnection(lobbyId, playerId);
+
+            if (virCon != null)
+                kickFromLobby(lobbyId, playerId, virCon, KickReason.LOBBY_DELETED);
+        }
+
+        repo.deleteLobby(lobbyId);
+        log.info("Deleted lobby {}.", lobbyId);
+    }
+
+    public void notifyMembersListUpdated(int lobbyId) {
+        notifyMembersListUpdated(lobbyId, 0);
+    }
+
+    public void notifyMembersListUpdated(int lobbyId, int exceptPlayerId) {
+        Map<String, String> members = repo.getMembers(lobbyId);
+        Map<Integer, String> convertedMembers = convertMembersMap(members);
+
+        String exceptedPlayerAppdx = exceptPlayerId == 0 ? "" : " (except for player {})";
+        log.info("Notifying {} players of lobby {} about its members list update {}.",
+                members.size(), lobbyId, exceptedPlayerAppdx);
+
+        for (String playerIdStr : members.keySet()) {
+            int playerId = Integer.parseInt(playerIdStr);
+
+            if (playerId != exceptPlayerId) { // чтобы не оповещать самих зашедших игроков об их же входе
+                VirtualConnection virCon = srv.getVirConManager()
+                        .resolveVirtualConnection(lobbyId, playerId);
+
+                if (virCon != null)
+                    // Оповещаем.
+                    srv.getNetService().updatedMembersList(virCon, convertedMembers);
+            }
+        }
+    }
+
+    private boolean addMember(int lobbyId, int newPlayerId,
+                             @NonNull String newPlayerName, @NonNull VirtualConnection virCon) {
+        boolean actuallyAdded = repo.addMember(lobbyId, newPlayerId, newPlayerName);
+
+        if (actuallyAdded) {
+            virCon.setCurrentlyHostedLobbyId(0);
+            virCon.setCurrentlyJoinedLobbyId(lobbyId);
+            virCon.setCurrentLocalPlayerId(newPlayerId);
+        }
+
+        return actuallyAdded;
+    }
+
+    private boolean removeMember(int lobbyId, int targetPlayerId, @NonNull VirtualConnection virCon) {
+        boolean actuallyRemoved = repo.removeMember(lobbyId, targetPlayerId);
+
+        if (actuallyRemoved) {
+            virCon.setCurrentlyHostedLobbyId(0);
+            virCon.setCurrentlyJoinedLobbyId(0);
+            virCon.setCurrentLocalPlayerId(0);
+        }
+
+        return actuallyRemoved;
+    }
+
+    public boolean kickFromLobby(int lobbyId, int targetPlayerId) {
+        // TODO: 26.04.2021 дать хостам возможность кикать других участников
+        return false;
+    }
+
+    private boolean kickFromLobby(int lobbyId, int targetPlayerId,
+                                  @NonNull VirtualConnection virCon, int reason) {
+        boolean actuallyKicked = removeMember(lobbyId, targetPlayerId, virCon);
+
+        if (actuallyKicked)
+            log.info("Kicked player {} from lobby {} (reason: {}).",
+                    targetPlayerId, lobbyId, reason);
+
+        if (actuallyKicked)
+            // Оповещаем игрока об исключении из комнаты.
+            srv.getNetService().kickedFromLobby(virCon, reason);
+
+        return actuallyKicked;
     }
 
     private int generateNewLobbyId() {
@@ -163,101 +266,6 @@ public class LobbyManager {
         return id;
     }
 
-    public void deleteLobby(int lobbyId) {
-        Map<String, String> members = repo.getMembers(lobbyId);
-
-        for (String playerIdStr : members.keySet()) {
-            int playerId = Integer.parseInt(playerIdStr);
-            String addrStr = srv.getVirConManager()
-                    .resolveVirtualConnection(lobbyId, playerId);
-
-            if (addrStr != null)
-                kickFromLobby(lobbyId, playerId, addrStr, KickReason.LOBBY_DELETED);
-        }
-
-        repo.deleteLobby(lobbyId);
-        log.info("Deleted lobby {}.", lobbyId);
-    }
-
-    public void notifyMembersListUpdated(int lobbyId) {
-        notifyMembersListUpdated(lobbyId, 0);
-    }
-
-    public void notifyMembersListUpdated(int lobbyId, int exceptPlayerId) {
-        Map<String, String> members = repo.getMembers(lobbyId);
-        Map<Integer, String> convertedMembers = convertMembersMap(members);
-
-        String exceptedPlayerAppdx = exceptPlayerId == 0 ? "" : " (except for player {})";
-        log.info("Notifying {} players of lobby {} about its members list update {}.",
-                members.size(), lobbyId, exceptedPlayerAppdx);
-
-        for (String playerIdStr : members.keySet()) {
-            int playerId = Integer.parseInt(playerIdStr);
-
-            if (playerId != exceptPlayerId) { // чтобы не оповещать самих зашедших игроков об их же входе
-                String addrStr = srv.getVirConManager()
-                        .resolveVirtualConnection(lobbyId, playerId);
-
-                if (addrStr != null) {
-                    // Оповещаем.
-                    try {
-                        srv.getPacketManager().sendPacket(InetAddress.getByName(addrStr),
-                                UpdatedMembersList.newBuilder()
-                                        .putAllMembers(convertedMembers)
-                                        .build()
-                        );
-                    } catch (UnknownHostException ex) {
-                        log.error("Failed to notify {} (address string: {}) about members list update in lobby {} " +
-                                "(unknown host).", playerId, addrStr, lobbyId);
-                    }
-                }
-            }
-        }
-    }
-
-    private boolean addMember(int lobbyId, int newPlayerId,
-                             @NonNull String newPlayerName, @NonNull String targetPlayerAddrStr) {
-        boolean actuallyAdded = repo.addMember(lobbyId, newPlayerId, newPlayerName);
-        srv.getVirConManager().bulkSet(targetPlayerAddrStr, 0, lobbyId, newPlayerId);
-        return actuallyAdded;
-    }
-
-    private boolean removeMember(int lobbyId, int targetPlayerId, @NonNull String targetPlayerAddrStr) {
-        boolean actuallyRemoved = repo.removeMember(lobbyId, targetPlayerId);
-        srv.getVirConManager().bulkSet(targetPlayerAddrStr, 0, 0, 0);
-        return actuallyRemoved;
-    }
-
-    public boolean kickFromLobby(int lobbyId, int targetPlayerId) {
-        // TODO: 26.04.2021 дать хостам возможность кикать других участников
-        return false;
-    }
-
-    private boolean kickFromLobby(int lobbyId, int targetPlayerId,
-                                  @NonNull String targetPlayerAddrStr, int reason) {
-        boolean actuallyKicked = removeMember(lobbyId, targetPlayerId, targetPlayerAddrStr);
-
-        if (actuallyKicked)
-            log.info("Kicked player {} from lobby {} (reason: {}).",
-                    targetPlayerId, lobbyId, reason);
-
-        // Оповещаем игрока об исключении из комнаты.
-        if (actuallyKicked) {
-            try {
-                srv.getPacketManager().sendPacket(InetAddress.getByName(targetPlayerAddrStr),
-                        KickedFromLobby.newBuilder()
-                                .setReason(reason)
-                                .build()
-                );
-            } catch (UnknownHostException ex) {
-                log.error("Failed to notify {} (address string: {}) about kick from lobby {} " +
-                        "(unknown host).", targetPlayerId, targetPlayerAddrStr, lobbyId);
-            }
-        }
-
-        return actuallyKicked;
-    }
-
     @RequiredArgsConstructor @Getter
     public static final class CreationResult {
         private static final CreationResult BAD_PLAYER_NAME
@@ -268,6 +276,9 @@ public class LobbyManager {
 
         private static final CreationResult UNAUTHORIZED
                 = new CreationResult(-401, 0);
+
+        private static final CreationResult FORBIDDEN
+                = new CreationResult(-403, 0);
 
         private static final CreationResult INTERNAL_ERROR
                 = new CreationResult(-999, 0);

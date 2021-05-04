@@ -38,28 +38,28 @@ executorThreadsKeepAliveSeconds: 60 # 1 минута
 udpServerPort: 23132
 
 # Размер буффера приёмника в байтах (максимальный размер сообщения, которое можно принять за раз целиком).
-udpServerBufferSize: 51200
+udpServerBufferSize: 1024
 
 
 
 
 #############################################################################################################
 #
-#   БАЗА ДАННЫХ
+#   ЧИСТИЛЬЩИКИ (БАЗЫ ДАННЫХ, ПАМЯТИ, ...)
 #
 #############################################################################################################
 
 # Максимальное время жизни бездействующих игровых комнат.
-dbCleanerLobbiesMaxObjectLifespanMillis: 1200000 # 20 минут
+cleanerLobbiesMaxIdleMillis: 1200000 # 20 минут
 
 # Периодичность чистки игровых комнат.
-dbCleanerLobbiesCleanupPeriodMillis: 600000 # 10 минут
+cleanerLobbiesCleanupPeriodMillis: 600000 # 10 минут
 
 # Максимальное время жизни бездействующих виртуальных соединений.
-dbCleanerVirtualConnectionsMaxObjectLifespanMillis: 60000 # 1 минута
+cleanerVirConsMaxIdleMillis: 60000 # 1 минута
 
 # Периодичность чистки виртуальных соединений.
-dbCleanerVirtualConnectionsCleanupPeriodMillis: 30000 # 30 секунд
+cleanerVirConsCleanupPeriodMillis: 30000 # 30 секунд
 
 
 

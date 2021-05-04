@@ -24,10 +24,10 @@ public class AwdServerConfig {
             udpServerPort,
             udpServerBufferSize,
 
-            dbCleanerLobbiesMaxObjectLifespanMillis,
-            dbCleanerLobbiesCleanupPeriodMillis,
-            dbCleanerVirtualConnectionsMaxObjectLifespanMillis,
-            dbCleanerVirtualConnectionsCleanupPeriodMillis,
+            cleanerLobbiesMaxIdleMillis,
+            cleanerLobbiesCleanupPeriodMillis,
+            cleanerVirConsMaxIdleMillis,
+            cleanerVirConsCleanupPeriodMillis,
 
             maxLobbySize,
             pingPeriodMillis;

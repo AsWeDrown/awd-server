@@ -7,9 +7,11 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor (access = AccessLevel.PACKAGE)
 @Getter
+@RequiredArgsConstructor (access = AccessLevel.PACKAGE)
 public final class UnwrappedPacketData {
+
+    private final int sequence, ack, ackBitfield;
 
     @NonNull
     private final PacketWrapper.PacketCase packetType;

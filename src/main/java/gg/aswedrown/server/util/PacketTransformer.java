@@ -23,8 +23,8 @@ public final class PacketTransformer {
      *
      * @see #unwrap(byte[]) для обратного действия.
      */
-    public static byte[] wrap(@NonNull Message packet) {
-        return internalGeneratedWrap(packet);
+    public static byte[] wrap(@NonNull Message packet, int sequence, int ack, int ackBitfield) {
+        return internalGeneratedWrap(packet, sequence, ack, ackBitfield);
     }
 
     /**
@@ -33,7 +33,7 @@ public final class PacketTransformer {
      * определяет тип (в данном случае - enum PacketWrapper.PacketCase) пакета, обёрнутого
      * этим PacketWrapper'ом, и распаковывает сам пакет (то, что мы и должны обработать).
      *
-     * @see #wrap(Message) для обратного действия.
+     * @see #wrap(Message, int, int, int) для обратного действия.
      */
     public static UnwrappedPacketData unwrap(@NonNull byte[] rawProto3PacketData) throws InvalidProtocolBufferException {
         if (rawProto3PacketData.length == 0)
@@ -50,7 +50,7 @@ public final class PacketTransformer {
      */
 
     // Сгенерировано с помощью awd-ptrans-codegen.
-    private static byte[] internalGeneratedWrap(Message packet) {
+    private static byte[] internalGeneratedWrap(Message packet, int sequence, int ack, int ackBitfield) {
         String packetClassNameUpper = packet.getClass().getSimpleName().toUpperCase();
         PacketWrapper.PacketCase packetType;
 
@@ -66,8 +66,11 @@ public final class PacketTransformer {
 
         switch (packetType) {
             case HANDSHAKEREQUEST:
-                return PacketWrapper.newBuilder().setHandshakeRequest(
-                        (HandshakeRequest) packet).build().toByteArray();
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setHandshakeRequest((HandshakeRequest) packet).build().toByteArray();
 
             case HANDSHAKERESPONSE:
                 return PacketWrapper.newBuilder().setHandshakeResponse(
@@ -128,11 +131,17 @@ public final class PacketTransformer {
     // Сгенерировано с помощью awd-ptrans-codegen.
     private static UnwrappedPacketData internalGeneratedUnwrap(byte[] data) throws InvalidProtocolBufferException {
         PacketWrapper wrapper = PacketWrapper.parseFrom(data);
+
+        int sequence    = wrapper.getSequence();
+        int ack         = wrapper.getAck();
+        int ackBitfield = wrapper.getAckBitfield();
+
         PacketWrapper.PacketCase packetType = wrapper.getPacketCase();
 
         switch (packetType) {
             case HANDSHAKEREQUEST:
-                return new UnwrappedPacketData(packetType, wrapper.getHandshakeRequest());
+                return new UnwrappedPacketData(sequence, ack, ackBitfield,
+                        packetType, wrapper.getHandshakeRequest());
 
             case HANDSHAKERESPONSE:
                 return new UnwrappedPacketData(packetType, wrapper.getHandshakeResponse());

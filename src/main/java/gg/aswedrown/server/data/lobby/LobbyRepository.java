@@ -14,6 +14,11 @@ public interface LobbyRepository {
     boolean lobbyExists(int lobbyId);
 
     /**
+     * @return true - имя успешно обновлено, false - в этой комнате нет игрока с таким локальным ID.
+     */
+    boolean updateMemberName(int lobbyId, int playerId, @NonNull String newPlayerName);
+
+    /**
      * @return true - игрок успешно добавлен, false - игрок уже состоит в этой комнате.
      */
     boolean addMember(int lobbyId, int playerId, @NonNull String playerName);
