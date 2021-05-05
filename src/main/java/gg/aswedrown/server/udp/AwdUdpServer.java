@@ -67,7 +67,8 @@ public class AwdUdpServer implements UdpServer {
                 } else
                     log.warn("Ignoring empty packet from {}.", senderAddr.getHostAddress());
             } catch (IOException ex) {
-                log.error("Failed to receive a UDP packet.", ex);
+                if (running) // чтобы не выводить "ошибку" при отключении сервера
+                    log.error("Failed to receive a UDP packet.", ex);
             }
         }
 

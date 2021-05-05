@@ -94,8 +94,10 @@ public class VirtualConnectionManager {
                         >= srv.getConfig().getCleanerVirConsMaxIdleMillis())
                 .collect(Collectors.toSet());
 
-        log.info("Closing {} idle virtual connections (timed out).", idle.size());
-        idle.forEach(this::closeVirtualConnection);
+        if (!idle.isEmpty()) {
+            log.info("Closing {} idle virtual connections (timed out).", idle.size());
+            idle.forEach(this::closeVirtualConnection);
+        }
     }
 
 }
