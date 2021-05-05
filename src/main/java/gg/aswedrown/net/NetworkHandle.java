@@ -3,8 +3,6 @@ package gg.aswedrown.net;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import gg.aswedrown.server.udp.UdpServer;
-import gg.aswedrown.server.util.PacketTransformer;
-import gg.aswedrown.server.util.UnwrappedPacketData;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;

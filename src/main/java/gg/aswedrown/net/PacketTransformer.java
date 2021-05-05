@@ -1,8 +1,7 @@
-package gg.aswedrown.server.util;
+package gg.aswedrown.net;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-import gg.aswedrown.net.*;
 import lombok.NonNull;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

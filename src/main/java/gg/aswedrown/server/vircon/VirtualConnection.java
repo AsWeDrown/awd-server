@@ -3,7 +3,7 @@ package gg.aswedrown.server.vircon;
 import com.google.protobuf.Message;
 import gg.aswedrown.net.NetworkHandle;
 import gg.aswedrown.server.udp.UdpServer;
-import gg.aswedrown.server.util.UnwrappedPacketData;
+import gg.aswedrown.net.UnwrappedPacketData;
 import lombok.*;
 
 import java.net.InetAddress;

@@ -4,7 +4,6 @@ import com.google.protobuf.Message;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.packetlistener.PacketListener;
 import gg.aswedrown.server.packetlistener.RegisterPacketListener;
-import gg.aswedrown.server.util.UnwrappedPacketData;
 import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
