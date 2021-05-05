@@ -1,6 +1,7 @@
 package gg.aswedrown.server.packetlistener;
 
 import gg.aswedrown.net.HandshakeRequest;
+import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.net.PacketManager;
 import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.AwdServer;
@@ -31,7 +32,7 @@ public class HandshakeRequestListener extends PacketListener<HandshakeRequest> {
         }
 
         // Возвращаем клиенту версию протокола на сервере.
-        srv.getNetService().handshakeResponse(virCon);
+        NetworkService.handshakeResponse(virCon);
     }
 
 }

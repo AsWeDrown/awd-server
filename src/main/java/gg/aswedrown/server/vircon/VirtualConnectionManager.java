@@ -1,5 +1,6 @@
 package gg.aswedrown.server.vircon;
 
+import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.server.AwdServer;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +86,7 @@ public class VirtualConnectionManager {
     }
 
     void pingAll() {
-        virConMap.values().forEach(srv.getNetService()::ping);
+        virConMap.values().forEach(NetworkService::ping);
     }
 
     private void closeIdleVirtualConnections() {

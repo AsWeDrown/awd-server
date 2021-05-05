@@ -1,5 +1,6 @@
 package gg.aswedrown.server.data.lobby;
 
+import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.Constraints;
 import gg.aswedrown.server.vircon.VirtualConnection;
@@ -194,7 +195,7 @@ public class LobbyManager {
 
                 if (virCon != null)
                     // Оповещаем.
-                    srv.getNetService().updatedMembersList(virCon, convertedMembers);
+                    NetworkService.updatedMembersList(virCon, convertedMembers);
             }
         }
     }
@@ -239,7 +240,7 @@ public class LobbyManager {
 
         if (actuallyKicked)
             // Оповещаем игрока об исключении из комнаты.
-            srv.getNetService().kickedFromLobby(virCon, reason);
+            NetworkService.kickedFromLobby(virCon, reason);
 
         return actuallyKicked;
     }

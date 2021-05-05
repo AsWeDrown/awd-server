@@ -55,9 +55,6 @@ public final class AwdServer {
     private VirtualConnectionManager virConManager;
 
     @Getter
-    private NetworkService netService;
-
-    @Getter
     private PacketManager packetManager;
 
     @Getter
@@ -145,7 +142,6 @@ public final class AwdServer {
 
     private void setupVirtualConnectivity() {
         virConManager = new VirtualConnectionManager(this);
-        netService = new NetworkService();
     }
 
     private void setupShutdownHook() {

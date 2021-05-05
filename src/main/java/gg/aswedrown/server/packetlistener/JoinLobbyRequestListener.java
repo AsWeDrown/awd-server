@@ -1,6 +1,7 @@
 package gg.aswedrown.server.packetlistener;
 
 import gg.aswedrown.net.JoinLobbyRequest;
+import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.lobby.LobbyManager;
@@ -18,7 +19,7 @@ public class JoinLobbyRequestListener extends PacketListener<JoinLobbyRequest> {
         LobbyManager.JoinResult result = srv.getLobbyManager()
                 .joinToLobby(virCon, packet.getLobbyId(), packet.getPlayerName());
 
-        srv.getNetService().joinLobbyResponse(virCon, result);
+        NetworkService.joinLobbyResponse(virCon, result);
     }
 
 }

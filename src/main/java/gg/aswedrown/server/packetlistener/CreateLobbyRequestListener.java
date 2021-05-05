@@ -1,6 +1,7 @@
 package gg.aswedrown.server.packetlistener;
 
 import gg.aswedrown.net.CreateLobbyRequest;
+import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.lobby.LobbyManager;
@@ -18,7 +19,7 @@ public class CreateLobbyRequestListener extends PacketListener<CreateLobbyReques
         LobbyManager.CreationResult result = srv.getLobbyManager()
                 .createNewLobby(virCon, packet.getPlayerName());
 
-        srv.getNetService().createLobbyResponse(virCon, result);
+        NetworkService.createLobbyResponse(virCon, result);
     }
 
 }
