@@ -155,7 +155,7 @@ public final class PacketTransformer {
                         .build()
                         .toByteArray();
 
-            case KEEP_ALIVE:
+            case KEEPALIVE:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
                         .setAck(ack)
@@ -241,7 +241,7 @@ public final class PacketTransformer {
                 return new UnwrappedPacketData(
                         sequence, ack, ackBitfield, packetType, wrapper.getUpdatedMembersList());
 
-            case KEEP_ALIVE:
+            case KEEPALIVE:
                 return new UnwrappedPacketData(
                         sequence, ack, ackBitfield, packetType, wrapper.getKeepAlive());
 

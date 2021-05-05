@@ -116,7 +116,7 @@ public class NetworkHandle {
 
                 if (bitSet) {
                     // Другая сторона подтвердила получение от нас пакета с номером (ack - bitNum).
-                    int ackedPacketSeqNum = ack - bitNum;
+                    int ackedPacketSeqNum = SequenceNumberMath.subtract(ack, bitNum);
                     packetDelivered(ackedPacketSeqNum);
                 }
 
