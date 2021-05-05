@@ -1,24 +1,25 @@
-package gg.aswedrown.vircon;
+package gg.aswedrown.server.vircon;
 
 import com.google.protobuf.Message;
 import gg.aswedrown.net.NetworkHandle;
 import gg.aswedrown.server.udp.UdpServer;
+import gg.aswedrown.server.util.UnwrappedPacketData;
 import lombok.*;
 
 import java.net.InetAddress;
 
 @Getter @Setter
-@RequiredArgsConstructor
 public class VirtualConnection {
 
-    @NonNull
+    private static final long  GOOD_LATENCY_MILLIS_THRESHOLD      = 100;
+    private static final float GOOD_PACKET_LOSS_PERCENT_THRESHOLD = 5.0f;
+
     private final UdpServer udpServer;
 
-    @NonNull
     private final InetAddress addr;
 
     @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
-    private final NetworkHandle handle = new NetworkHandle(udpServer, addr);
+    private final NetworkHandle handle;
 
     private volatile boolean authorized;
 
@@ -29,8 +30,18 @@ public class VirtualConnection {
     private volatile long lastPongDateTime = System.currentTimeMillis(),
                           pongLatency;
 
+    VirtualConnection(@NonNull UdpServer udpServer, @NonNull InetAddress addr) {
+        this.udpServer = udpServer;
+        this.addr = addr;
+        this.handle = new NetworkHandle(udpServer, addr);
+    }
+
     long getMillisSinceLastPong() {
         return System.currentTimeMillis() - lastPongDateTime;
+    }
+
+    public UnwrappedPacketData receivePacket(@NonNull byte[] packetData) {
+        return handle.receivePacket(packetData);
     }
 
     /**
@@ -52,6 +63,15 @@ public class VirtualConnection {
      */
     public boolean sendImportantPacket(@NonNull Message packet) {
         return handle.sendPacket(true, packet);
+    }
+
+    public float getPacketLossPercent() {
+        return handle.getPacketLossPercent();
+    }
+
+    public boolean isConnectionBad() {
+        return pongLatency                   > GOOD_LATENCY_MILLIS_THRESHOLD
+            || handle.getPacketLossPercent() > GOOD_PACKET_LOSS_PERCENT_THRESHOLD;
     }
 
 }

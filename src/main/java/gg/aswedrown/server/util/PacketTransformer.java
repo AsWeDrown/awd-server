@@ -49,7 +49,7 @@ public final class PacketTransformer {
 
      */
 
-    // Сгенерировано с помощью awd-ptrans-codegen.
+    // Сгенерировано с помощью awd-ptrans-codegen. (ОБЯЗАТЕЛЬНО ДОЛЖНО БЫТЬ В ОДНУ СТРОЧКУ - НИЧЕГО НЕ ПЕРЕНОСИТЬ!!!)
     private static byte[] internalGeneratedWrap(Message packet, int sequence, int ack, int ackBitfield) {
         String packetClassNameUpper = packet.getClass().getSimpleName().toUpperCase();
         PacketWrapper.PacketCase packetType;
@@ -65,60 +65,122 @@ public final class PacketTransformer {
         }
 
         switch (packetType) {
-            case HANDSHAKEREQUEST:
+            case HANDSHAKE_REQUEST:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
                         .setAck(ack)
                         .setAckBitfield(ackBitfield)
-                        .setHandshakeRequest((HandshakeRequest) packet).build().toByteArray();
+                        .setHandshakeRequest((HandshakeRequest) packet)
+                        .build()
+                        .toByteArray();
 
-            case HANDSHAKERESPONSE:
-                return PacketWrapper.newBuilder().setHandshakeResponse(
-                        (HandshakeResponse) packet).build().toByteArray();
+            case HANDSHAKE_RESPONSE:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setHandshakeResponse((HandshakeResponse) packet)
+                        .build()
+                        .toByteArray();
 
-            case CREATELOBBYREQUEST:
-                return PacketWrapper.newBuilder().setCreateLobbyRequest(
-                        (CreateLobbyRequest) packet).build().toByteArray();
+            case CREATE_LOBBY_REQUEST:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setCreateLobbyRequest((CreateLobbyRequest) packet)
+                        .build()
+                        .toByteArray();
 
-            case CREATELOBBYRESPONSE:
-                return PacketWrapper.newBuilder().setCreateLobbyResponse(
-                        (CreateLobbyResponse) packet).build().toByteArray();
+            case CREATE_LOBBY_RESPONSE:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setCreateLobbyResponse((CreateLobbyResponse) packet)
+                        .build()
+                        .toByteArray();
 
-            case JOINLOBBYREQUEST:
-                return PacketWrapper.newBuilder().setJoinLobbyRequest(
-                        (JoinLobbyRequest) packet).build().toByteArray();
+            case JOIN_LOBBY_REQUEST:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setJoinLobbyRequest((JoinLobbyRequest) packet)
+                        .build()
+                        .toByteArray();
 
-            case JOINLOBBYRESPONSE:
-                return PacketWrapper.newBuilder().setJoinLobbyResponse(
-                        (JoinLobbyResponse) packet).build().toByteArray();
+            case JOIN_LOBBY_RESPONSE:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setJoinLobbyResponse((JoinLobbyResponse) packet)
+                        .build()
+                        .toByteArray();
 
-            case LEAVELOBBYREQUEST:
-                return PacketWrapper.newBuilder().setLeaveLobbyRequest(
-                        (LeaveLobbyRequest) packet).build().toByteArray();
+            case LEAVE_LOBBY_REQUEST:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setLeaveLobbyRequest((LeaveLobbyRequest) packet)
+                        .build()
+                        .toByteArray();
 
-            case LEAVELOBBYRESPONSE:
-                return PacketWrapper.newBuilder().setLeaveLobbyResponse(
-                        (LeaveLobbyResponse) packet).build().toByteArray();
+            case LEAVE_LOBBY_RESPONSE:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setLeaveLobbyResponse((LeaveLobbyResponse) packet)
+                        .build()
+                        .toByteArray();
 
-            case KICKEDFROMLOBBY:
-                return PacketWrapper.newBuilder().setKickedFromLobby(
-                        (KickedFromLobby) packet).build().toByteArray();
+            case KICKED_FROM_LOBBY:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setKickedFromLobby((KickedFromLobby) packet)
+                        .build()
+                        .toByteArray();
 
-            case UPDATEDMEMBERSLIST:
-                return PacketWrapper.newBuilder().setUpdatedMembersList(
-                        (UpdatedMembersList) packet).build().toByteArray();
+            case UPDATED_MEMBERS_LIST:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setUpdatedMembersList((UpdatedMembersList) packet)
+                        .build()
+                        .toByteArray();
 
             case KEEPALIVE:
-                return PacketWrapper.newBuilder().setKeepAlive(
-                        (KeepAlive) packet).build().toByteArray();
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setKeepAlive((KeepAlive) packet)
+                        .build()
+                        .toByteArray();
 
             case PING:
-                return PacketWrapper.newBuilder().setPing(
-                        (Ping) packet).build().toByteArray();
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setPing((Ping) packet)
+                        .build()
+                        .toByteArray();
 
             case PONG:
-                return PacketWrapper.newBuilder().setPong(
-                        (Pong) packet).build().toByteArray();
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setPong((Pong) packet)
+                        .build()
+                        .toByteArray();
 
             default:
                 // Код "case ..." для пакетов этого типа отсутствует выше.
@@ -128,7 +190,7 @@ public final class PacketTransformer {
         }
     }
 
-    // Сгенерировано с помощью awd-ptrans-codegen.
+    // Сгенерировано с помощью awd-ptrans-codegen. (ОБЯЗАТЕЛЬНО ДОЛЖНО БЫТЬ В ОДНУ СТРОЧКУ - НИЧЕГО НЕ ПЕРЕНОСИТЬ!!!)
     private static UnwrappedPacketData internalGeneratedUnwrap(byte[] data) throws InvalidProtocolBufferException {
         PacketWrapper wrapper = PacketWrapper.parseFrom(data);
 
@@ -139,45 +201,57 @@ public final class PacketTransformer {
         PacketWrapper.PacketCase packetType = wrapper.getPacketCase();
 
         switch (packetType) {
-            case HANDSHAKEREQUEST:
-                return new UnwrappedPacketData(sequence, ack, ackBitfield,
-                        packetType, wrapper.getHandshakeRequest());
+            case HANDSHAKE_REQUEST:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getHandshakeRequest());
 
-            case HANDSHAKERESPONSE:
-                return new UnwrappedPacketData(packetType, wrapper.getHandshakeResponse());
+            case HANDSHAKE_RESPONSE:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getHandshakeResponse());
 
-            case CREATELOBBYREQUEST:
-                return new UnwrappedPacketData(packetType, wrapper.getCreateLobbyRequest());
+            case CREATE_LOBBY_REQUEST:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getCreateLobbyRequest());
 
-            case CREATELOBBYRESPONSE:
-                return new UnwrappedPacketData(packetType, wrapper.getCreateLobbyResponse());
+            case CREATE_LOBBY_RESPONSE:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getCreateLobbyResponse());
 
-            case JOINLOBBYREQUEST:
-                return new UnwrappedPacketData(packetType, wrapper.getJoinLobbyRequest());
+            case JOIN_LOBBY_REQUEST:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getJoinLobbyRequest());
 
-            case JOINLOBBYRESPONSE:
-                return new UnwrappedPacketData(packetType, wrapper.getJoinLobbyResponse());
+            case JOIN_LOBBY_RESPONSE:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getJoinLobbyResponse());
 
-            case LEAVELOBBYREQUEST:
-                return new UnwrappedPacketData(packetType, wrapper.getLeaveLobbyRequest());
+            case LEAVE_LOBBY_REQUEST:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getLeaveLobbyRequest());
 
-            case LEAVELOBBYRESPONSE:
-                return new UnwrappedPacketData(packetType, wrapper.getLeaveLobbyResponse());
+            case LEAVE_LOBBY_RESPONSE:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getLeaveLobbyResponse());
 
-            case KICKEDFROMLOBBY:
-                return new UnwrappedPacketData(packetType, wrapper.getKickedFromLobby());
+            case KICKED_FROM_LOBBY:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getKickedFromLobby());
 
-            case UPDATEDMEMBERSLIST:
-                return new UnwrappedPacketData(packetType, wrapper.getUpdatedMembersList());
+            case UPDATED_MEMBERS_LIST:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getUpdatedMembersList());
 
             case KEEPALIVE:
-                return new UnwrappedPacketData(packetType, wrapper.getKeepAlive());
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getKeepAlive());
 
             case PING:
-                return new UnwrappedPacketData(packetType, wrapper.getPing());
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getPing());
 
             case PONG:
-                return new UnwrappedPacketData(packetType, wrapper.getPong());
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getPong());
 
             default:
                 // Неизвестный пакет - он будет проигнорирован (не передан никакому PacketListener'у).

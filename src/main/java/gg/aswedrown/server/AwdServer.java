@@ -1,13 +1,14 @@
 package gg.aswedrown.server;
 
+import gg.aswedrown.net.PacketManager;
+import gg.aswedrown.server.command.ConsoleCommandDispatcher;
 import gg.aswedrown.server.data.DbInfo;
 import gg.aswedrown.server.data.lobby.LobbyManager;
 import gg.aswedrown.server.data.lobby.MongoLobbyRepository;
-import gg.aswedrown.net.PacketManager;
 import gg.aswedrown.server.udp.AwdUdpServer;
 import gg.aswedrown.server.udp.UdpServer;
-import gg.aswedrown.vircon.Pinger;
-import gg.aswedrown.vircon.VirtualConnectionManager;
+import gg.aswedrown.server.vircon.Pinger;
+import gg.aswedrown.server.vircon.VirtualConnectionManager;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import me.darksidecode.kantanj.db.mongo.MongoManager;
@@ -42,6 +43,9 @@ public final class AwdServer {
     private ExecutorService executor;
 
     @Getter
+    private ConsoleCommandDispatcher consoleCmdsDisp;
+
+    @Getter
     private MongoManager db;
 
     @Getter
@@ -70,9 +74,10 @@ public final class AwdServer {
 
         loadConfig();
 
-        setupExecutor();
         setupShutdownHook();
+        setupExecutor();
         setupDatabase();
+        setupConsoleCommands();
         setupVirtualConnectivity();
 
         double startupTookSeconds = (System.currentTimeMillis() - startupBeginTime) / 1000.0D;
@@ -131,6 +136,11 @@ public final class AwdServer {
         // TODO: 26.04.2021 оптимизировать работу с БД
         //  (сейчас код удобный и простой, но с производительностью не очень)
         lobbyManager = new LobbyManager(this, new MongoLobbyRepository(db));
+    }
+
+    private void setupConsoleCommands() {
+        consoleCmdsDisp = new ConsoleCommandDispatcher(this);
+        consoleCmdsDisp.start();
     }
 
     private void setupVirtualConnectivity() {

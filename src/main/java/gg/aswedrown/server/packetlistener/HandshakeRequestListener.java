@@ -4,11 +4,11 @@ import gg.aswedrown.net.HandshakeRequest;
 import gg.aswedrown.net.PacketManager;
 import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.AwdServer;
-import gg.aswedrown.vircon.VirtualConnection;
+import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@RegisterPacketListener (PacketWrapper.PacketCase.HANDSHAKEREQUEST)
+@RegisterPacketListener (PacketWrapper.PacketCase.HANDSHAKE_REQUEST)
 public class HandshakeRequestListener extends PacketListener<HandshakeRequest> {
 
     public HandshakeRequestListener(AwdServer srv) {

@@ -1,4 +1,4 @@
-package gg.aswedrown.vircon;
+package gg.aswedrown.server.vircon;
 
 import gg.aswedrown.server.AwdServer;
 import lombok.NonNull;
@@ -33,12 +33,26 @@ public class VirtualConnectionManager {
         }, period, period);
     }
 
+    public int getActiveVirtualConnections() {
+        return virConMap.size();
+    }
+
+    public int getAuthorizedVirtualConnections() {
+        return (int) virConMap.values().stream()
+                .filter(VirtualConnection::isAuthorized)
+                .count();
+    }
+
     public VirtualConnection resolveVirtualConnection(int lobbyId, int playerId) {
         return virConMap.values().stream()
                 .filter(virCon -> virCon.getCurrentlyJoinedLobbyId() == lobbyId
                         && virCon.getCurrentLocalPlayerId() == playerId)
                 .findAny()
                 .orElse(null);
+    }
+
+    public VirtualConnection strictGetVirtualConnection(@NonNull InetAddress addr) {
+        return virConMap.get(addr);
     }
 
     public VirtualConnection getVirtualConnection(@NonNull InetAddress addr) {
@@ -70,10 +84,8 @@ public class VirtualConnectionManager {
                 .orElse(0.0);
     }
 
-    void pingAuthorized() {
-        virConMap.values().stream()
-                .filter(VirtualConnection::isAuthorized)
-                .forEach(srv.getNetService()::ping);
+    void pingAll() {
+        virConMap.values().forEach(srv.getNetService()::ping);
     }
 
     private void closeIdleVirtualConnections() {

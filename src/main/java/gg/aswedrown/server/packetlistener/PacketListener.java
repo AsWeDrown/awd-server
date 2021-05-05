@@ -2,7 +2,7 @@ package gg.aswedrown.server.packetlistener;
 
 import com.google.protobuf.Message;
 import gg.aswedrown.server.AwdServer;
-import gg.aswedrown.vircon.VirtualConnection;
+import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

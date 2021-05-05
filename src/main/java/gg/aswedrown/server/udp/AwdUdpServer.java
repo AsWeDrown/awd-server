@@ -1,7 +1,7 @@
 package gg.aswedrown.server.udp;
 
 import gg.aswedrown.net.PacketManager;
-import gg.aswedrown.vircon.VirtualConnectionManager;
+import gg.aswedrown.server.vircon.VirtualConnectionManager;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

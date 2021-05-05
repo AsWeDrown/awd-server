@@ -121,40 +121,47 @@ message Pong {
  */
 
 message PacketWrapper {
-  // Номера с     1 по   999 зарезервированы под пакеты предыгрового этапа (LOBBY STATE),
-  //        с  1000 по  9999               - под пакеты игрового этапа (PLAY STATE),
-  //        с 10000 по 99999               - под общие пакеты (GENERAL)
+  // "Протоколообразующие" поля, общие для всех пакетов - и для тех, которые отправляет клиент серверу,
+  // и для тех, которые сервер отправляет клиенту. Используется для надёжности протокола:
+  // https://gafferongames.com/post/reliability_ordering_and_congestion_avoidance_over_udp/
+  uint32 sequence     = 1;
+  uint32 ack          = 2;
+  uint32 ack_bitfield = 3;
+
+  // Номера с     1 по     9 зарезервированы "протоколообразующие" (основные) поля (описаны немного выше ^),
+  //        с    10 по   999               - под PacketCase пакетов предыгрового этапа (LOBBY STATE),
+  //        с  1000 по  9999               - под PacketCase пакетов игрового этапа (PLAY STATE),
+  //        с 10000 по 99999               - под PacketCase общих пакетов (GENERAL).
   //
-  // ВАЖНО: 1) внутри этого блока 'oneof packet {...}' запрещено использовать комментарии /* такого */ вида
-  //           (в т.ч. многострочные - последовательность "/*" внутри этого блока не должно быть в любом виде);
-  //        2) внутри этого блока имена должны быть camelCase, а не snake_case, как везде; это "нарушает"
-  //           гугловский стайл-гайд, зато делает проще написание и работу генератора кода (ptrans-codegen),
-  //           особенно для C++.
+  // ВАЖНО: (1) внутри этого блока 'oneof packet {...}' запрещено использовать комментарии /* такого */ вида
+  //            (в т.ч. многострочные - последовательность "/*" внутри этого блока не должно быть в любом виде);
+  //        (2) названия полей ("oneof case", "packet case") должны быть snake_case; кроме того, между названием
+  //            класса пакета (message) и названием поля должен быть ровно один пробел (напр., "Ping ping").
   oneof packet {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //   LOBBY STATE
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    HandshakeRequest           handshakeRequest           =     1;
-    HandshakeResponse          handshakeResponse          =     2;
-    CreateLobbyRequest         createLobbyRequest         =   100;
-    CreateLobbyResponse        createLobbyResponse        =   101;
-    JoinLobbyRequest           joinLobbyRequest           =   102;
-    JoinLobbyResponse          joinLobbyResponse          =   103;
-    LeaveLobbyRequest          leaveLobbyRequest          =   104;
-    LeaveLobbyResponse         leaveLobbyResponse         =   105;
-    KickedFromLobby            kickedFromLobby            =   106;
-    UpdatedMembersList         updatedMembersList         =   107;
+    HandshakeRequest handshake_request           =    10;
+    HandshakeResponse handshake_response         =    11;
+    CreateLobbyRequest create_lobby_request      =   100;
+    CreateLobbyResponse create_lobby_response    =   101;
+    JoinLobbyRequest join_lobby_request          =   102;
+    JoinLobbyResponse join_lobby_response        =   103;
+    LeaveLobbyRequest leave_lobby_request        =   104;
+    LeaveLobbyResponse leave_lobby_response      =   105;
+    KickedFromLobby kicked_from_lobby            =   106;
+    UpdatedMembersList updated_members_list      =   107;
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //   PLAY STATE
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    KeepAlive                  keepAlive                  =  1000;
+    KeepAlive keepAlive                  =  1000;//todo delete
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //   GENERAL
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Ping                       ping                       = 10000;
-    Pong                       pong                       = 10001;
+    Ping ping              = 10000;
+    Pong pong              = 10001;
   }
 }

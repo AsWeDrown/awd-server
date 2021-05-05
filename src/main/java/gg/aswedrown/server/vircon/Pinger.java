@@ -1,4 +1,4 @@
-package gg.aswedrown.vircon;
+package gg.aswedrown.server.vircon;
 
 import gg.aswedrown.server.AwdServer;
 import lombok.NonNull;
@@ -16,7 +16,7 @@ public class Pinger extends TimerTask {
 
     @Override
     public void run() {
-        srv.getVirConManager().pingAuthorized();
+        srv.getVirConManager().pingAll();
     }
 
 }

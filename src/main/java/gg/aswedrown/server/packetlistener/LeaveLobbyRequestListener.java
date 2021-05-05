@@ -3,9 +3,9 @@ package gg.aswedrown.server.packetlistener;
 import gg.aswedrown.net.LeaveLobbyRequest;
 import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.AwdServer;
-import gg.aswedrown.vircon.VirtualConnection;
+import gg.aswedrown.server.vircon.VirtualConnection;
 
-@RegisterPacketListener (PacketWrapper.PacketCase.LEAVELOBBYREQUEST)
+@RegisterPacketListener (PacketWrapper.PacketCase.LEAVE_LOBBY_REQUEST)
 public class LeaveLobbyRequestListener extends PacketListener<LeaveLobbyRequest> {
 
     public LeaveLobbyRequestListener(AwdServer srv) {

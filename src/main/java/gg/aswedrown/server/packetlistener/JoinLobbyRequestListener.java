@@ -4,9 +4,9 @@ import gg.aswedrown.net.JoinLobbyRequest;
 import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.lobby.LobbyManager;
-import gg.aswedrown.vircon.VirtualConnection;
+import gg.aswedrown.server.vircon.VirtualConnection;
 
-@RegisterPacketListener (PacketWrapper.PacketCase.JOINLOBBYREQUEST)
+@RegisterPacketListener (PacketWrapper.PacketCase.JOIN_LOBBY_REQUEST)
 public class JoinLobbyRequestListener extends PacketListener<JoinLobbyRequest> {
 
     public JoinLobbyRequestListener(AwdServer srv) {

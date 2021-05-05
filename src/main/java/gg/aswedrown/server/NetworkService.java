@@ -2,7 +2,7 @@ package gg.aswedrown.server;
 
 import gg.aswedrown.net.*;
 import gg.aswedrown.server.data.lobby.LobbyManager;
-import gg.aswedrown.vircon.VirtualConnection;
+import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 

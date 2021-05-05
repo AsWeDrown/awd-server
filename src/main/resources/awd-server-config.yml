@@ -74,4 +74,4 @@ cleanerVirConsCleanupPeriodMillis: 30000 # 30 секунд
 maxLobbySize: 4
 
 # Частота отправки пакетов Ping всем активным клиентам (для поддержания виртуального соединения).
-pingPeriodMillis: 3000
+pingPeriodMillis: 1000

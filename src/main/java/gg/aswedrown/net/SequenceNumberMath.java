@@ -3,10 +3,10 @@ package gg.aswedrown.net;
 final class SequenceNumberMath {
 
     /* = 2^16-1 - 16-битное кодирование номеров пакетов (sequence number) */
-    public static final int MAX_SEQUENCE_NUMBER = 65535;
+    private static final int MAX_SEQUENCE_NUMBER = 65535;
 
     /* = 2^15-1 - половина максимума ^ (выше) */
-    public static final int SEQUENCE_NUMBER_WRAP_AROUND_THRESHOLD = 32767;
+    private static final int SEQUENCE_NUMBER_WRAP_AROUND_THRESHOLD = 32767;
 
     private SequenceNumberMath() {}
 

@@ -5,7 +5,7 @@ import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.packetlistener.PacketListener;
 import gg.aswedrown.server.packetlistener.RegisterPacketListener;
 import gg.aswedrown.server.util.UnwrappedPacketData;
-import gg.aswedrown.vircon.VirtualConnection;
+import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
@@ -73,7 +73,7 @@ public class PacketManager {
     }
 
     public void receivePacket(@NonNull VirtualConnection virCon, @NonNull byte[] packetData) {
-        UnwrappedPacketData unwrappedPacketData = virCon.getHandle().receivePacket(packetData);
+        UnwrappedPacketData unwrappedPacketData = virCon.receivePacket(packetData);
 
         if (unwrappedPacketData != null) { // null - внутренняя ошибка получения
             try {
