@@ -4,13 +4,50 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import lombok.NonNull;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *   TODO: при добавлении в протокол новых пакетов ОБЯЗАТЕЛЬНО ДОБАВЛЯТЬ ИХ СЮДА!
  *         Для добавления использовать утилиту-генератор кода awd-ptrans-codegen.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 public final class PacketTransformer {
 
+    private static final Map<Class<? extends Message>, PacketWrapper.PacketCase>
+            packetCaseNameMapping = new ConcurrentHashMap<>();
+
     private PacketTransformer() {}
+
+    private static String camelToSnakeUpper(String camel) {
+        // "HandshakeRequest" --> "HANDSHAKE_REQUEST"
+        StringBuilder snakeUpper = new StringBuilder();
+        char[] camelChars = camel.toCharArray();
+        boolean firstChar = true;
+
+        for (char ch : camelChars) {
+            if (firstChar) {
+                firstChar = false;
+                snakeUpper.append(ch);
+            } else if (Character.isUpperCase(ch))
+                snakeUpper.append('_').append(ch);
+            else
+                snakeUpper.append(Character.toUpperCase(ch));
+        }
+
+        return snakeUpper.toString();
+    }
+
+    private static PacketWrapper.PacketCase getPacketCase(Class<? extends Message> packetClass) {
+        PacketWrapper.PacketCase packetCase = packetCaseNameMapping.get(packetClass);
+
+        if (packetCase == null) { // ленивое вычисление
+            packetCase = PacketWrapper.PacketCase.valueOf(
+                    camelToSnakeUpper(packetClass.getSimpleName()));
+            packetCaseNameMapping.put(packetClass, packetCase);
+        }
+
+        return packetCase;
+    }
 
     /**
      * Принимает на вход сам пакет (то, что мы и должны отправить), преобразовывает (обычный cast)
@@ -51,17 +88,7 @@ public final class PacketTransformer {
     // Сгенерировано с помощью awd-ptrans-codegen. (ОБЯЗАТЕЛЬНО ДОЛЖНО БЫТЬ В ОДНУ СТРОЧКУ - НИЧЕГО НЕ ПЕРЕНОСИТЬ!!!)
     private static byte[] internalGeneratedWrap(Message packet, int sequence, int ack, int ackBitfield) {
         String packetClassNameUpper = packet.getClass().getSimpleName().toUpperCase();
-        PacketWrapper.PacketCase packetType;
-
-        try {
-            packetType = PacketWrapper.PacketCase.valueOf(packetClassNameUpper);
-        } catch (IllegalArgumentException ex) {
-            // Тип этого пакета отсутствует в енуме PacketWrapper.PacketCase.
-            // Значит, этот пакет не указан в спецификации (packets.proto - message PacketWrapper).
-            // Нужно указать! (вручную)
-            throw new RuntimeException("illegal packet type: "
-                    + packetClassNameUpper + " (" + packet.getClass().getName() + ")");
-        }
+        PacketWrapper.PacketCase packetType = getPacketCase(packet.getClass());
 
         switch (packetType) {
             case HANDSHAKE_REQUEST:
