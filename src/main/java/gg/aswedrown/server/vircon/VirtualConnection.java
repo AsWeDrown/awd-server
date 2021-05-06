@@ -2,42 +2,85 @@ package gg.aswedrown.server.vircon;
 
 import com.google.protobuf.Message;
 import gg.aswedrown.net.NetworkHandle;
-import gg.aswedrown.server.udp.UdpServer;
+import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.net.UnwrappedPacketData;
-import lombok.*;
+import gg.aswedrown.server.AwdServer;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 
 import java.net.InetAddress;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Getter @Setter
 public class VirtualConnection {
 
-    private static final long  GOOD_LATENCY_MILLIS_THRESHOLD      = 100;
+    private static final int   MAX_PENDING_PING_TESTS             = 30;
+    private static final long  GOOD_LATENCY_MILLIS_THRESHOLD      = 90;
     private static final float GOOD_PACKET_LOSS_PERCENT_THRESHOLD = 5.0f;
 
-    private final UdpServer udpServer;
+    private final Object lock = new Object();
+
+    private final AwdServer srv;
 
     private final InetAddress addr;
 
     @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
     private final NetworkHandle handle;
 
+    @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
+    private final Deque<PingTest> pendingPingTests = new ArrayDeque<>();
+
     private volatile boolean authorized;
 
     private volatile int currentlyHostedLobbyId,
                          currentlyJoinedLobbyId,
-                         currentLocalPlayerId;
+                         currentLocalPlayerId,
+                         pongLatency;
 
-    private volatile long lastPongDateTime = System.currentTimeMillis(),
-                          pongLatency;
+    private volatile long lastPongDateTime = System.currentTimeMillis();
 
-    VirtualConnection(@NonNull UdpServer udpServer, @NonNull InetAddress addr) {
-        this.udpServer = udpServer;
+    VirtualConnection(@NonNull AwdServer srv, @NonNull InetAddress addr) {
+        this.srv = srv;
         this.addr = addr;
-        this.handle = new NetworkHandle(udpServer, addr);
+        this.handle = new NetworkHandle(srv.getUdpServer(), addr);
     }
 
     long getMillisSinceLastPong() {
         return System.currentTimeMillis() - lastPongDateTime;
+    }
+
+    public void ping() {
+        int testId = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
+
+        synchronized (lock) {
+            if (pendingPingTests.size() == MAX_PENDING_PING_TESTS)
+                pendingPingTests.pop(); // удаляем самый старый Ping - мы уже вряд ли получим на него ответ (Pong)
+
+            pendingPingTests.add(new PingTest(testId, System.currentTimeMillis()));
+        }
+
+        NetworkService.ping(this, testId, pongLatency);
+    }
+
+    public void pongReceived(int testId) {
+        long currTime = System.currentTimeMillis();
+
+        synchronized (lock) {
+            PingTest pongedTest = pendingPingTests.stream()
+                    .filter(pingTest -> pingTest.getTestId() == testId)
+                    .findAny()
+                    .orElse(null);
+
+            if (pongedTest != null) { // принимаем только "актуальные" и "не повреждённые" Pong'и
+                lastPongDateTime = currTime;
+                pendingPingTests.remove(pongedTest);
+                pongLatency = (int) (currTime - pongedTest.getSentTime());
+            }
+        }
     }
 
     public UnwrappedPacketData receivePacket(@NonNull byte[] packetData) {

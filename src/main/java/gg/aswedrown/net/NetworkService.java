@@ -42,12 +42,13 @@ public class NetworkService {
         );
     }
 
-    public static void ping(@NonNull VirtualConnection virCon) {
+    public static void ping(@NonNull VirtualConnection virCon, int testId, int lastLatency) {
         // Для каждого клиента устанавливаем "своё" время (currentTimeMillis), т.к.
         // отправка пакета может занять некоторое время, что визуально сделает пинг
         // клиентов зависимым от того, в каком порядке им был отправлен пакет Ping.
         virCon.sendPacket(Ping.newBuilder()
-                .setServerTime(System.currentTimeMillis())
+                .setTestId(testId)
+                .setLastLatency(lastLatency)
                 .build()
         );
     }

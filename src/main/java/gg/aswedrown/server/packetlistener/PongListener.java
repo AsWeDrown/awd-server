@@ -14,11 +14,9 @@ public class PongListener extends PacketListener<Pong> {
 
     @Override
     protected void processPacket(VirtualConnection virCon, Pong packet) throws Exception {
-        long latency = System.currentTimeMillis() - packet.getClientTime();
-        srv.getVirConManager().pongReceived(virCon, latency);
+        virCon.pongReceived(packet.getTestId());
 
-        System.out.println("** TEMP DEBUG ** Pong received - latency of "
-                + virCon.getAddr().getHostAddress() + " is " + latency + " ms");
+        System.out.println("** TEMP DEBUG ** Pong received: " + virCon.getAddr().getHostAddress());
     }
 
 }

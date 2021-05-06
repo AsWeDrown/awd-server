@@ -106,11 +106,12 @@ message KeepAlive {
  */
 
 message Ping {
-  uint64 server_time = 1;
+  uint32 test_id      = 1;
+  uint32 last_latency = 2;
 }
 
 message Pong {
-  uint64 client_time = 1;
+  uint32 test_id = 1;
 }
 
 /*

@@ -1,6 +1,5 @@
 package gg.aswedrown.server.vircon;
 
-import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.server.AwdServer;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +60,7 @@ public class VirtualConnectionManager {
 
         if (virCon == null) {
             log.info("Virtual connection established: {}.", addr.getHostAddress());
-            virCon = new VirtualConnection(srv.getUdpServer(), addr);
+            virCon = new VirtualConnection(srv, addr);
             virConMap.put(addr, virCon);
         }
 
@@ -73,11 +72,6 @@ public class VirtualConnectionManager {
         virConMap.remove(addr);
     }
 
-    public void pongReceived(@NonNull VirtualConnection virCon, long latency) {
-        virCon.setLastPongDateTime(System.currentTimeMillis());
-        virCon.setPongLatency(latency);
-    }
-
     public long getAverageLatency() {
         return (long) virConMap.values().stream()
                 .mapToLong(VirtualConnection::getPongLatency)
@@ -86,7 +80,7 @@ public class VirtualConnectionManager {
     }
 
     void pingAll() {
-        virConMap.values().forEach(NetworkService::ping);
+        virConMap.values().forEach(VirtualConnection::ping);
     }
 
     private void closeIdleVirtualConnections() {
