@@ -59,7 +59,7 @@ public final class PacketTransformer {
      *
      * @see #unwrap(byte[]) для обратного действия.
      */
-    public static byte[] wrap(@NonNull Message packet, int sequence, int ack, int ackBitfield) {
+    public static byte[] wrap(@NonNull Message packet, int sequence, int ack, long ackBitfield) {
         return internalGeneratedWrap(packet, sequence, ack, ackBitfield);
     }
 
@@ -69,7 +69,7 @@ public final class PacketTransformer {
      * определяет тип (в данном случае - enum PacketWrapper.PacketCase) пакета, обёрнутого
      * этим PacketWrapper'ом, и распаковывает сам пакет (то, что мы и должны обработать).
      *
-     * @see #wrap(Message, int, int, int) для обратного действия.
+     * @see #wrap(Message, int, int, long) для обратного действия.
      */
     public static UnwrappedPacketData unwrap(@NonNull byte[] rawProto3PacketData) throws InvalidProtocolBufferException {
         if (rawProto3PacketData.length == 0)
@@ -86,7 +86,7 @@ public final class PacketTransformer {
      */
 
     // Сгенерировано с помощью awd-ptrans-codegen. (ОБЯЗАТЕЛЬНО ДОЛЖНО БЫТЬ В ОДНУ СТРОЧКУ - НИЧЕГО НЕ ПЕРЕНОСИТЬ!!!)
-    private static byte[] internalGeneratedWrap(Message packet, int sequence, int ack, int ackBitfield) {
+    private static byte[] internalGeneratedWrap(Message packet, int sequence, int ack, long ackBitfield) {
         String packetClassNameUpper = packet.getClass().getSimpleName().toUpperCase();
         PacketWrapper.PacketCase packetType = getPacketCase(packet.getClass());
 
@@ -220,9 +220,9 @@ public final class PacketTransformer {
     private static UnwrappedPacketData internalGeneratedUnwrap(byte[] data) throws InvalidProtocolBufferException {
         PacketWrapper wrapper = PacketWrapper.parseFrom(data);
 
-        int sequence    = wrapper.getSequence();
-        int ack         = wrapper.getAck();
-        int ackBitfield = wrapper.getAckBitfield();
+        int  sequence    = wrapper.getSequence();
+        int  ack         = wrapper.getAck();
+        long ackBitfield = wrapper.getAckBitfield();
 
         PacketWrapper.PacketCase packetType = wrapper.getPacketCase();
 

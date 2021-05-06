@@ -55,19 +55,29 @@ public class VirtualConnection {
 
     public void ping() {
         int testId = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
+        long currTime;
 
         synchronized (lock) {
             if (pendingPingTests.size() == MAX_PENDING_PING_TESTS)
                 pendingPingTests.pop(); // удаляем самый старый Ping - мы уже вряд ли получим на него ответ (Pong)
 
-            pendingPingTests.add(new PingTest(testId, System.currentTimeMillis()));
+            currTime = System.currentTimeMillis();
+            pendingPingTests.add(new PingTest(testId, currTime));
+            System.out.println("** TEMP DEBUG ** [1/3] Registered pending ping to "
+                    + addr.getHostAddress() + " : testId = " + testId + ", currTime = " + currTime);
         }
 
+        System.out.println("** TEMP DEBUG ** [2/3] Sending ping to " + addr.getHostAddress() + ", testId = "
+                + testId + ", millis delay: " + (System.currentTimeMillis() - currTime));
         NetworkService.ping(this, testId, pongLatency);
+        System.out.println("** TEMP DEBUG ** [3/3] Sent ping to " + addr.getHostAddress() + ", testId = "
+                + testId + ", millis delay: " + (System.currentTimeMillis() - currTime));
     }
 
     public void pongReceived(int testId) {
         long currTime = System.currentTimeMillis();
+        System.out.println("** TEMP DEBUG ** (1/2) RECEIVED ping FROM " + addr.getHostAddress() + ", testId = "
+                + testId + ", currTime = " + currTime);
 
         synchronized (lock) {
             PingTest pongedTest = pendingPingTests.stream()
@@ -78,7 +88,12 @@ public class VirtualConnection {
             if (pongedTest != null) { // принимаем только "актуальные" и "не повреждённые" Pong'и
                 lastPongDateTime = currTime;
                 pendingPingTests.remove(pongedTest);
-                pongLatency = (int) (currTime - pongedTest.getSentTime());
+                pongLatency = (int) (currTime - pongedTest.getSentTime()) / 2; // "/ 2" для ОДНОсторонней задержки
+
+                System.out.println("** TEMP DEBUG ** (2/2) ACCEPTED ping FROM " + addr.getHostAddress() + ", testId = "
+                        + testId + ", millis delay = " + (System.currentTimeMillis() - currTime)
+                        + " --> pongLatency := " + pongLatency + " (" + pendingPingTests.size()
+                        + " tests still pending)");
             }
         }
     }

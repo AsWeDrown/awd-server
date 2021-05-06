@@ -10,7 +10,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor (access = AccessLevel.PACKAGE)
 public final class UnwrappedPacketData {
 
-    private final int sequence, ack, ackBitfield;
+    private final int sequence, ack;
+    private final long ackBitfield;
 
     @NonNull
     private final PacketWrapper.PacketCase packetType;

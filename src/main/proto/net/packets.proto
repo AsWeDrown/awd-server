@@ -127,7 +127,7 @@ message PacketWrapper {
   // https://gafferongames.com/post/reliability_ordering_and_congestion_avoidance_over_udp/
   uint32 sequence     = 1;
   uint32 ack          = 2;
-  uint32 ack_bitfield = 3;
+  uint64 ack_bitfield = 3; // на самом деле используется uint32, но 64 нужно для нормальной работы в Java
 
   // Номера с     1 по     9 зарезервированы "протоколообразующие" (основные) поля (описаны немного выше ^),
   //        с    10 по   999               - под PacketCase пакетов предыгрового этапа (LOBBY STATE),

@@ -69,8 +69,8 @@ public class NetworkHandle {
                 remoteSequenceNumber; // номер самого "нового" полученного пакета
 
     /* Этот метод НЕ гарантирует потокобезопасность. Его вызов должен быть обёрнут в блокирующий блок. */
-    private int calculateAckBitfield() {
-        int ackBitfield = 0;
+    private long calculateAckBitfield() {
+        long ackBitfield = 0;
 
         // Идём от 1, т.к. иначе мы включим в ack bitfield ещё и пакет с номером remote sequence
         // number - а это нам не нужно - о получении пакета с этим номером мы сообщим отправителю
@@ -80,10 +80,10 @@ public class NetworkHandle {
                     .subtract(remoteSequenceNumber, bitNum))) // в порядке уменьшения номера
                 // "Оповещение" о том, что мы успешно получили пакет с этим
                 // sequence number (устанавливаем бит с соотв. номером на единицу).
-                ackBitfield |= 1 << (bitNum - 1); // т.к. идём с единицы, не забываем отнимать эту единицу здесь
+                ackBitfield |= 1L << (bitNum - 1); // т.к. идём с единицы, не забываем отнимать эту единицу здесь
 
         System.out.println("** TEMP DEBUG ** Calculated ack bitfield: "
-                + Integer.toString(ackBitfield, 2));
+                + Long.toString(ackBitfield, 2));
 
         return ackBitfield;
     }
@@ -102,12 +102,12 @@ public class NetworkHandle {
 
             // Смотрим, подтверждение получения каких пакетов другая сторона указала.
             int ack = data.getAck(); // sequence number последнего пакета, который другая сторона от нас получила
-            int ackBitfield = data.getAckBitfield(); // сведения о получении 32 пакетов до пакета с номером ack
+            long ackBitfield = data.getAckBitfield(); // сведения о получении 32 пакетов до пакета с номером ack
             int bitNum = 1; // начинаем с 1, т.к. 0 - это этот с номером ack; нас интересуют те, что были до него
 
             System.out.println("** TEMP DEBUG ** Packet received: #" + sequence
                     + " (current remote seq: #" + remoteSequenceNumber + "), ack: " + ack
-                    + ", ack bitfield: " + Integer.toString(ackBitfield, 2));
+                    + ", ack bitfield: " + Long.toString(ackBitfield, 2) + " ( = " + ackBitfield + " )");
 
             while (ackBitfield > 0) {
                 boolean bitSet = (ackBitfield & 1) == 1;
@@ -119,7 +119,7 @@ public class NetworkHandle {
                 }
 
                 // Переходим к следующему биту.
-                ackBitfield >>= 1;
+                ackBitfield >>= 1L;
                 bitNum++;
             }
 
