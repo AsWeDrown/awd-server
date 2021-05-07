@@ -53,21 +53,25 @@ public class LobbyManager {
             else if (curHostedLobbyId == 0) {
                 // У этого игрока ещё нет созданных комнат. Создаём.
                 int newLobbyId = generateNewLobbyId();
-                int localPlayerId = generateNewLocalPlayerId(newLobbyId, true); // ID игрока-хоста
+                int localPlayerId = generateNewLocalPlayerId(newLobbyId, true); // локальный ID игрока-хоста
+                int character = ThreadLocalRandom.current().nextInt(
+                        Constraints.MIN_CHARACTER_ID, 1 + Constraints.MAX_CHARACTER_ID);
 
-                repo.createLobby(newLobbyId, localPlayerId, creatorPlayerName);
+                repo.createLobby(newLobbyId, localPlayerId, creatorPlayerName, character);
 
                 virCon.setCurrentlyHostedLobbyId(newLobbyId);
                 virCon.setCurrentlyJoinedLobbyId(newLobbyId);
                 virCon.setCurrentLocalPlayerId(localPlayerId);
+                virCon.setCurrentCharacter(character);
 
                 log.info("Created lobby {} (host: {}#{}).", newLobbyId, creatorPlayerName, localPlayerId);
 
-                return new CreationResult(newLobbyId, localPlayerId);
+                return new CreationResult(newLobbyId, localPlayerId, character);
             } else {
                 // Этот игрок уже является создателем некоторой комнаты. Возвращаем её данные.
                 int registeredHostId = virCon.getCurrentLocalPlayerId();
-                String originalName = repo.getMembers(curHostedLobbyId)
+                int curCharacter = virCon.getCurrentCharacter();
+                String originalName = repo.getMembersNames(curHostedLobbyId)
                         .get(Integer.toString(registeredHostId));
 
                 if (!creatorPlayerName.equals(originalName))
@@ -76,7 +80,7 @@ public class LobbyManager {
                         // Обновить имя не получилось. Что-то здесь не так...
                         return CreationResult.FORBIDDEN;
 
-                return new CreationResult(curHostedLobbyId, registeredHostId);
+                return new CreationResult(curHostedLobbyId, registeredHostId, curCharacter);
             }
         } catch (Exception ex) {
             log.error("Unhandled exception in createNewLobby:", ex);
@@ -103,20 +107,25 @@ public class LobbyManager {
             if (!repo.lobbyExists(lobbyId))
                 return JoinResult.LOBBY_DOES_NOT_EXIST;
 
-            Map<String, String> members = repo.getMembers(lobbyId);
+            Map<String, String> membersNames = repo.getMembersNames(lobbyId);
 
-            if (members.size() == srv.getConfig().getMaxLobbySize())
+            if (membersNames.size() == srv.getConfig().getMaxLobbySize())
                 return JoinResult.LOBBY_IS_FULL;
+
+            Map<Integer, Integer> membersCharacters
+                    = convertMembersCharactersMap(repo.getMembersCharacters(lobbyId));
 
             // Если дошли до этого момента, то всё ок. Добавляем игрока в комнату.
             int playerId = generateNewLocalPlayerId(lobbyId, false);
-            boolean added = addMember(lobbyId, playerId, playerName, virCon);
+            int character = generateNextCharacter(membersCharacters);
+            boolean added = addMember(lobbyId, playerId, playerName, character, virCon);
 
             if (added) {
                 notifyMembersListUpdated(lobbyId, playerId);
                 log.info("Player {}#{} joined lobby {}.", playerName, playerId, lobbyId);
 
-                return new JoinResult(playerId, convertMembersMap(members));
+                return new JoinResult(playerId, repo.getHost(lobbyId), character,
+                        convertMembersNamesMap(membersNames), membersCharacters);
             } else
                 return JoinResult.ALREADY_JOINED_THIS_LOBBY;
         } catch (Exception ex) {
@@ -152,14 +161,20 @@ public class LobbyManager {
         }
     }
 
-    private Map<Integer, String> convertMembersMap(@NonNull Map<String, String> strToStrMap) {
+    private Map<Integer, String> convertMembersNamesMap(@NonNull Map<String, String> strToStrMap) {
         Map<Integer, String> intToStrMap = new HashMap<>();
         strToStrMap.forEach((k, v) -> intToStrMap.put(Integer.parseInt(k), v));
         return intToStrMap;
     }
 
+    private Map<Integer, Integer> convertMembersCharactersMap(@NonNull Map<String, String> strToStrMap) {
+        Map<Integer, Integer> intToIntMap = new HashMap<>();
+        strToStrMap.forEach((k, v) -> intToIntMap.put(Integer.parseInt(k), Integer.parseInt(v)));
+        return intToIntMap;
+    }
+
     public void deleteLobby(int lobbyId) {
-        Map<String, String> members = repo.getMembers(lobbyId);
+        Map<String, String> members = repo.getMembersNames(lobbyId);
 
         for (String playerIdStr : members.keySet()) {
             int playerId = Integer.parseInt(playerIdStr);
@@ -179,8 +194,8 @@ public class LobbyManager {
     }
 
     public void notifyMembersListUpdated(int lobbyId, int exceptPlayerId) {
-        Map<String, String> members = repo.getMembers(lobbyId);
-        Map<Integer, String> convertedMembers = convertMembersMap(members);
+        Map<String, String> members = repo.getMembersNames(lobbyId);
+        Map<Integer, String> convertedMembers = convertMembersNamesMap(members);
 
         String exceptedPlayerAppdx = exceptPlayerId == 0 ? "" : " (except for player {})";
         log.info("Notifying {} players of lobby {} about its members list update {}.",
@@ -200,14 +215,15 @@ public class LobbyManager {
         }
     }
 
-    private boolean addMember(int lobbyId, int newPlayerId,
-                             @NonNull String newPlayerName, @NonNull VirtualConnection virCon) {
-        boolean actuallyAdded = repo.addMember(lobbyId, newPlayerId, newPlayerName);
+    private boolean addMember(int lobbyId, int newPlayerId, @NonNull String newPlayerName,
+                              int character, @NonNull VirtualConnection virCon) {
+        boolean actuallyAdded = repo.addMember(lobbyId, newPlayerId, newPlayerName, character);
 
         if (actuallyAdded) {
             virCon.setCurrentlyHostedLobbyId(0);
             virCon.setCurrentlyJoinedLobbyId(lobbyId);
             virCon.setCurrentLocalPlayerId(newPlayerId);
+            virCon.setCurrentCharacter(character);
         }
 
         return actuallyAdded;
@@ -220,6 +236,7 @@ public class LobbyManager {
             virCon.setCurrentlyHostedLobbyId(0);
             virCon.setCurrentlyJoinedLobbyId(0);
             virCon.setCurrentLocalPlayerId(0);
+            virCon.setCurrentCharacter(0);
         }
 
         return actuallyRemoved;
@@ -267,54 +284,69 @@ public class LobbyManager {
         return id;
     }
 
+    private int generateNextCharacter(@NonNull Map<Integer, Integer> takenCharacters) {
+        if (ThreadLocalRandom.current().nextBoolean()) { // "рандомность" в том, с какого конца идём
+            for (int i = 1; i <= Constraints.MAX_CHARACTER_ID; i++)
+                if (!takenCharacters.containsValue(i))
+                    return i;
+        } else {
+            for (int i = Constraints.MAX_CHARACTER_ID; i >= 1 ; i--)
+                if (!takenCharacters.containsValue(i))
+                    return i;
+        }
+
+        throw new IllegalStateException("out of characters (lobby size exceeded?)");
+    }
+
     @RequiredArgsConstructor @Getter
     public static final class CreationResult {
         private static final CreationResult BAD_PLAYER_NAME
-                = new CreationResult(-1, 0);
+                = new CreationResult(-1, 0, 0);
 
         private static final CreationResult ALREADY_JOINED_ANOTHER_LOBBY
-                = new CreationResult(-2, 0);
+                = new CreationResult(-2, 0, 0);
 
         private static final CreationResult UNAUTHORIZED
-                = new CreationResult(-401, 0);
+                = new CreationResult(-401, 0, 0);
 
         private static final CreationResult FORBIDDEN
-                = new CreationResult(-403, 0);
+                = new CreationResult(-403, 0, 0);
 
         private static final CreationResult INTERNAL_ERROR
-                = new CreationResult(-999, 0);
+                = new CreationResult(-999, 0, 0);
 
-        private final int lobbyId, playerId;
+        private final int lobbyId, playerId, character;
     }
 
     @RequiredArgsConstructor @Getter
     public static final class JoinResult {
         private static final JoinResult BAD_PLAYER_NAME
-                = new JoinResult(-1, null);
+                = new JoinResult(-1, 0, 0, null, null);
 
         private static final JoinResult LOBBY_IS_FULL
-                = new JoinResult(-2, null);
+                = new JoinResult(-2, 0, 0, null, null);
 
         private static final JoinResult ALREADY_JOINED_THIS_LOBBY
-                = new JoinResult(-3, null);
+                = new JoinResult(-3, 0, 0, null, null);
 
         private static final JoinResult ALREADY_JOINED_ANOTHER_LOBBY
-                = new JoinResult(-4, null);
+                = new JoinResult(-4, 0, 0, null, null);
 
         private static final JoinResult PLAYER_NAME_TAKEN
-                = new JoinResult(-5, null);
+                = new JoinResult(-5, 0, 0, null, null);
 
         private static final JoinResult LOBBY_DOES_NOT_EXIST
-                = new JoinResult(-6, null);
+                = new JoinResult(-6, 0, 0, null, null);
 
         private static final JoinResult UNAUTHORIZED
-                = new JoinResult(-401, null);
+                = new JoinResult(-401, 0, 0, null, null);
 
         private static final JoinResult INTERNAL_ERROR
-                = new JoinResult(-999, null);
+                = new JoinResult(-999, 0, 0, null, null);
 
-        private final int playerId;
-        private final Map<Integer, String> members;
+        private final int playerId, character, hostId;
+        private final Map<Integer, String> membersNames;
+        private final Map<Integer, Integer> membersCharacters;
     }
 
     public static final class KickReason {

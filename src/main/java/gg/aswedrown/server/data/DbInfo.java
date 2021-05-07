@@ -18,7 +18,8 @@ public final class DbInfo {
         public static final String CREATION_DATE_TIME  = "creationDateTime";
         public static final String GAME_STATE          = "gameState";
         public static final String HOST_PLAYER_ID      = "hostPlayerId";
-        public static final String MEMBERS             = "members";
+        public static final String MEMBERS_NAMES       = "membersNames";
+        public static final String MEMBERS_CHARACTERS  = "membersCharacters";
     }
 
 }

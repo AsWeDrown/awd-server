@@ -22,6 +22,7 @@ public class NetworkService {
         virCon.sendImportantPacket(CreateLobbyResponse.newBuilder()
                 .setLobbyId(result.getLobbyId())
                 .setPlayerId(result.getPlayerId())
+                .setCharacter(result.getCharacter())
                 .build()
         );
     }
@@ -30,7 +31,10 @@ public class NetworkService {
                                          @NonNull LobbyManager.JoinResult result) {
         virCon.sendImportantPacket(JoinLobbyResponse.newBuilder()
                 .setPlayerId(result.getPlayerId())
-                .putAllOtherPlayers(result.getMembers())
+                .setCharacter(result.getCharacter())
+                .setHostId(result.getHostId())
+                .putAllOthersNames(result.getMembersNames())
+                .putAllOthersCharacters(result.getMembersCharacters())
                 .build()
         );
     }

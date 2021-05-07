@@ -5,6 +5,7 @@ import gg.aswedrown.net.NetworkHandle;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.net.UnwrappedPacketData;
 import gg.aswedrown.server.AwdServer;
+import gg.aswedrown.server.data.Constraints;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -39,6 +40,7 @@ public class VirtualConnection {
     private volatile int currentlyHostedLobbyId,
                          currentlyJoinedLobbyId,
                          currentLocalPlayerId,
+                         currentCharacter,
                          pongLatency;
 
     private volatile long lastPongDateTime = System.currentTimeMillis();
@@ -54,7 +56,8 @@ public class VirtualConnection {
     }
 
     public void ping() {
-        int testId = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
+        int testId = ThreadLocalRandom.current().nextInt(
+                Constraints.MIN_INT32_ID, Constraints.MAX_INT32_ID);
         long currTime;
 
         synchronized (lock) {

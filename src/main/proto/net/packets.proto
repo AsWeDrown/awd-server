@@ -59,6 +59,7 @@ message CreateLobbyRequest {
 message CreateLobbyResponse {
   sint32 lobby_id  = 1;
   uint32 player_id = 2;
+  uint32 character = 3;
 }
 
 message JoinLobbyRequest {
@@ -67,8 +68,11 @@ message JoinLobbyRequest {
 }
 
 message JoinLobbyResponse {
-  sint32             player_id     = 1;
-  map<int32, string> other_players = 2;
+  sint32              player_id         = 1;
+  uint32              character         = 2;
+  uint32              host_id           = 3;
+  map<uint32, string> others_names      = 4;
+  map<uint32, uint32> others_characters = 5;
 }
 
 message LeaveLobbyRequest {
@@ -127,7 +131,7 @@ message PacketWrapper {
   // https://gafferongames.com/post/reliability_ordering_and_congestion_avoidance_over_udp/
   uint32 sequence     = 1;
   uint32 ack          = 2;
-  uint64 ack_bitfield = 3; // на самом деле используется uint32, но 64 нужно для нормальной работы в Java
+  uint64 ack_bitfield = 3; // на самом деле используется uint32, но 64 нужно для нормальной работы в Java ("long")
 
   // Номера с     1 по     9 зарезервированы "протоколообразующие" (основные) поля (описаны немного выше ^),
   //        с    10 по   999               - под PacketCase пакетов предыгрового этапа (LOBBY STATE),

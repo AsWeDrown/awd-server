@@ -59,7 +59,7 @@ cleanerLobbiesCleanupPeriodMillis: 600000 # 10 минут
 cleanerVirConsMaxIdleMillis: 60000 # 1 минута
 
 # Периодичность чистки виртуальных соединений.
-cleanerVirConsCleanupPeriodMillis: 30000 # 30 секунд
+cleanerVirConsCleanupPeriodMillis: 15000 # 15 секунд
 
 
 

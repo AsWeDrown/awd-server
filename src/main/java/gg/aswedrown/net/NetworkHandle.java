@@ -217,10 +217,20 @@ public class NetworkHandle {
         UnwrappedPacketData unwrappedPacketData;
 
         try {
+            long begin = System.currentTimeMillis();
+
             unwrappedPacketData = PacketTransformer.unwrap(packetData);
 
+            System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
+                    + " to UNWRAP a " + packetData.length + "-bytes packet");
+
             if (unwrappedPacketData != null) {
+                begin = System.currentTimeMillis();
                 packetReceived(unwrappedPacketData);
+                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
+                        + " to POST-PROCESS a RECEIVED " + packetData.length + "-bytes packet " +
+                        "(" + unwrappedPacketData.getPacket().getClass().getSimpleName() + ")");
+
                 return unwrappedPacketData; // получили пакет успешно
             } else
                 // Protobuf смог десериализовать полученный пакет, но для него в listeners
@@ -238,6 +248,8 @@ public class NetworkHandle {
     public boolean sendPacket(boolean ensureDelivered, @NonNull Message packet) {
         synchronized (lock) {
             try {
+                long begin = System.currentTimeMillis();
+
                 // Конструируем пакет.
                 byte[] data = PacketTransformer.wrap(packet,
                         localSequenceNumber,
@@ -248,12 +260,25 @@ public class NetworkHandle {
                 System.out.println("** TEMP DEBUG ** Sending packet #" + localSequenceNumber
                         + ", acking #" + remoteSequenceNumber);
 
+                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
+                        + " to CONSTRUCT a " + packet.getClass().getSimpleName() + " packet");
+
+                begin = System.currentTimeMillis();
+
                 // Отправляем пакет по UDP.
                 udpServer.sendRaw(addr, data);
+
+                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
+                        + " to SEND a " + packet.getClass().getSimpleName() + " packet");
+
+                begin = System.currentTimeMillis();
 
                 // "Протоколообразующие" манипуляции.
                 packetSent(new PacketContainer(
                         ensureDelivered, localSequenceNumber, packet)); // "протоколообразующие" манипуляции
+
+                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
+                        + " to POST-PROCESS a " + packet.getClass().getSimpleName() + " packet");
 
                 return true; // пакет отправлен успешно
             } catch (IOException ex) {

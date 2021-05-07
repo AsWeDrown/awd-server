@@ -7,7 +7,7 @@ import java.util.Map;
 
 public interface LobbyRepository {
 
-    void createLobby(int lobbyId, int hostPlayerId, @NonNull String hostPlayerName);
+    void createLobby(int lobbyId, int hostPlayerId, @NonNull String hostPlayerName, int hostCharacter);
 
     void deleteLobby(int lobbyId);
 
@@ -21,7 +21,7 @@ public interface LobbyRepository {
     /**
      * @return true - игрок успешно добавлен, false - игрок уже состоит в этой комнате.
      */
-    boolean addMember(int lobbyId, int playerId, @NonNull String playerName);
+    boolean addMember(int lobbyId, int playerId, @NonNull String playerName, int character);
 
     /**
      * @return true - игрок успешно исключён, false - игрок не состоит в этой комнате.
@@ -32,7 +32,9 @@ public interface LobbyRepository {
 
     int getHost(int lobbyId);
 
-    Map<String, String> getMembers(int lobbyId);
+    Map<String, String> getMembersNames(int lobbyId);
+
+    Map<String, String> getMembersCharacters(int lobbyId);
 
     int getGameState(int lobbyId);
 
