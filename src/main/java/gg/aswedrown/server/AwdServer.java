@@ -73,9 +73,9 @@ public final class AwdServer {
 
         setupShutdownHook();
         setupExecutor();
+        setupVirtualConnectivity(); // используется в БД, так что должно делаться до setupDatabase
         setupDatabase();
         setupConsoleCommands();
-        setupVirtualConnectivity();
 
         double startupTookSeconds = (System.currentTimeMillis() - startupBeginTime) / 1000.0D;
         log.info("Startup done! Everything took {} s.", String.format("%.2f", startupTookSeconds));
@@ -127,6 +127,10 @@ public final class AwdServer {
         );
     }
 
+    private void setupVirtualConnectivity() {
+        virConManager = new VirtualConnectionManager(this);
+    }
+
     private void setupDatabase() {
         db = new MongoManager().noLogs().connectLocal().select(DbInfo.DATABASE_NAME);
 
@@ -138,10 +142,6 @@ public final class AwdServer {
     private void setupConsoleCommands() {
         consoleCmdsDisp = new ConsoleCommandDispatcher(this);
         consoleCmdsDisp.start();
-    }
-
-    private void setupVirtualConnectivity() {
-        virConManager = new VirtualConnectionManager(this);
     }
 
     private void setupShutdownHook() {
