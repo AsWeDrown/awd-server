@@ -16,6 +16,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 public class LobbyManager {
+    
+    private static final Map<Integer, String>  EMPTY_INT_STR_MAP = new HashMap<>();
+    private static final Map<Integer, Integer> EMPTY_INT_INT_MAP = new HashMap<>();
 
     @NonNull
     private final AwdServer srv;
@@ -54,8 +57,7 @@ public class LobbyManager {
                 // У этого игрока ещё нет созданных комнат. Создаём.
                 int newLobbyId = generateNewLobbyId();
                 int localPlayerId = generateNewLocalPlayerId(newLobbyId, true); // локальный ID игрока-хоста
-                int character = ThreadLocalRandom.current().nextInt(
-                        Constraints.MIN_CHARACTER_ID, 1 + Constraints.MAX_CHARACTER_ID);
+                int character = ThreadLocalRandom.current().nextInt(1, 5); // [1,4]
 
                 repo.createLobby(newLobbyId, localPlayerId, creatorPlayerName, character);
 
@@ -64,7 +66,8 @@ public class LobbyManager {
                 virCon.setCurrentLocalPlayerId(localPlayerId);
                 virCon.setCurrentCharacter(character);
 
-                log.info("Created lobby {} (host: {}#{}).", newLobbyId, creatorPlayerName, localPlayerId);
+                log.info("Created lobby {} (host: {}#{} (character: {})).",
+                        newLobbyId, creatorPlayerName, localPlayerId, character);
 
                 return new CreationResult(newLobbyId, localPlayerId, character);
             } else {
@@ -112,6 +115,9 @@ public class LobbyManager {
             if (membersNames.size() == srv.getConfig().getMaxLobbySize())
                 return JoinResult.LOBBY_IS_FULL;
 
+            if (membersNames.keySet().stream().anyMatch(playerName::equalsIgnoreCase))
+                return JoinResult.PLAYER_NAME_TAKEN;
+
             Map<Integer, Integer> membersCharacters
                     = convertMembersCharactersMap(repo.getMembersCharacters(lobbyId));
 
@@ -122,9 +128,10 @@ public class LobbyManager {
 
             if (added) {
                 notifyMembersListUpdated(lobbyId, playerId);
-                log.info("Player {}#{} joined lobby {}.", playerName, playerId, lobbyId);
+                log.info("Player {}#{} joined lobby {} (character: {}).",
+                        playerName, playerId, lobbyId, character);
 
-                return new JoinResult(playerId, repo.getHost(lobbyId), character,
+                return new JoinResult(playerId, character, repo.getHost(lobbyId),
                         convertMembersNamesMap(membersNames), membersCharacters);
             } else
                 return JoinResult.ALREADY_JOINED_THIS_LOBBY;
@@ -195,10 +202,11 @@ public class LobbyManager {
 
     public void notifyMembersListUpdated(int lobbyId, int exceptPlayerId) {
         Map<String, String> members = repo.getMembersNames(lobbyId);
-        Map<Integer, String> convertedMembers = convertMembersNamesMap(members);
+        Map<Integer, String> convertedNames = convertMembersNamesMap(members);
 
-        String exceptedPlayerAppdx = exceptPlayerId == 0 ? "" : " (except for player {})";
-        log.info("Notifying {} players of lobby {} about its members list update {}.",
+        String exceptedPlayerAppdx = exceptPlayerId == 0
+                ? "." : " (except for player " + exceptPlayerId + ").";
+        log.info("Notifying {} players of lobby {} about its members list update{}",
                 members.size(), lobbyId, exceptedPlayerAppdx);
 
         for (String playerIdStr : members.keySet()) {
@@ -210,7 +218,8 @@ public class LobbyManager {
 
                 if (virCon != null)
                     // Оповещаем.
-                    NetworkService.updatedMembersList(virCon, convertedMembers);
+                    NetworkService.updatedMembersList(virCon, convertedNames,
+                            convertMembersCharactersMap(repo.getMembersCharacters(lobbyId)));
             }
         }
     }
@@ -286,11 +295,11 @@ public class LobbyManager {
 
     private int generateNextCharacter(@NonNull Map<Integer, Integer> takenCharacters) {
         if (ThreadLocalRandom.current().nextBoolean()) { // "рандомность" в том, с какого конца идём
-            for (int i = 1; i <= Constraints.MAX_CHARACTER_ID; i++)
+            for (int i = 1; i <= 4; i++)
                 if (!takenCharacters.containsValue(i))
                     return i;
         } else {
-            for (int i = Constraints.MAX_CHARACTER_ID; i >= 1 ; i--)
+            for (int i = 4; i >= 1 ; i--)
                 if (!takenCharacters.containsValue(i))
                     return i;
         }
@@ -321,28 +330,28 @@ public class LobbyManager {
     @RequiredArgsConstructor @Getter
     public static final class JoinResult {
         private static final JoinResult BAD_PLAYER_NAME
-                = new JoinResult(-1, 0, 0, null, null);
+                = new JoinResult(-1, 0, 0, EMPTY_INT_STR_MAP, EMPTY_INT_INT_MAP);
 
         private static final JoinResult LOBBY_IS_FULL
-                = new JoinResult(-2, 0, 0, null, null);
+                = new JoinResult(-2, 0, 0, EMPTY_INT_STR_MAP, EMPTY_INT_INT_MAP);
 
         private static final JoinResult ALREADY_JOINED_THIS_LOBBY
-                = new JoinResult(-3, 0, 0, null, null);
+                = new JoinResult(-3, 0, 0, EMPTY_INT_STR_MAP, EMPTY_INT_INT_MAP);
 
         private static final JoinResult ALREADY_JOINED_ANOTHER_LOBBY
-                = new JoinResult(-4, 0, 0, null, null);
+                = new JoinResult(-4, 0, 0, EMPTY_INT_STR_MAP, EMPTY_INT_INT_MAP);
 
         private static final JoinResult PLAYER_NAME_TAKEN
-                = new JoinResult(-5, 0, 0, null, null);
+                = new JoinResult(-5, 0, 0, EMPTY_INT_STR_MAP, EMPTY_INT_INT_MAP);
 
         private static final JoinResult LOBBY_DOES_NOT_EXIST
-                = new JoinResult(-6, 0, 0, null, null);
+                = new JoinResult(-6, 0, 0, EMPTY_INT_STR_MAP, EMPTY_INT_INT_MAP);
 
         private static final JoinResult UNAUTHORIZED
-                = new JoinResult(-401, 0, 0, null, null);
+                = new JoinResult(-401, 0, 0, EMPTY_INT_STR_MAP, EMPTY_INT_INT_MAP);
 
         private static final JoinResult INTERNAL_ERROR
-                = new JoinResult(-999, 0, 0, null, null);
+                = new JoinResult(-999, 0, 0, EMPTY_INT_STR_MAP, EMPTY_INT_INT_MAP);
 
         private final int playerId, character, hostId;
         private final Map<Integer, String> membersNames;

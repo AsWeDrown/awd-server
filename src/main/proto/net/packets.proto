@@ -89,7 +89,8 @@ message KickedFromLobby {
 }
 
 message UpdatedMembersList {
-  map<uint32, string> members = 1;
+  map<uint32, string> new_all_names      = 1;
+  map<uint32, uint32> new_all_characters = 2;
 }
 
 /*
@@ -98,6 +99,7 @@ message UpdatedMembersList {
 ---------------------------------------------------------------------------------------------------
  */
 
+//todo delete
 message KeepAlive {
   int32 player_id = 1;
   int32 test_id   = 2;
@@ -110,8 +112,8 @@ message KeepAlive {
  */
 
 message Ping {
-  uint32 test_id      = 1;
-  uint32 last_latency = 2;
+  uint32 test_id = 1;
+  uint32 rtt     = 2;
 }
 
 message Pong {

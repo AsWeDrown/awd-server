@@ -13,14 +13,17 @@ import lombok.Setter;
 
 import java.net.InetAddress;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Getter @Setter
 public class VirtualConnection {
 
-    private static final int   MAX_PENDING_PING_TESTS             = 30;
-    private static final long  GOOD_LATENCY_MILLIS_THRESHOLD      = 90;
+    private static final int   MAX_SEND_QUEUE_SIZE                = 10  ;
+    private static final int   MAX_PENDING_PING_TESTS             = 5   ;
+    private static final int   GOOD_RTT_THRESHOLD                 = 99  ;
     private static final float GOOD_PACKET_LOSS_PERCENT_THRESHOLD = 5.0f;
 
     private final Object lock = new Object();
@@ -35,13 +38,22 @@ public class VirtualConnection {
     @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
     private final Deque<PingTest> pendingPingTests = new ArrayDeque<>();
 
+    @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
+    private final List<UnwrappedPacketData> receiveQueue = new ArrayList<>();
+
+    @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
+    private final List<Message> sendQueue = new ArrayList<>();
+
+    @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
+    private final List<Boolean> ensureDeliveredStatuses = new ArrayList<>();
+
     private volatile boolean authorized;
 
     private volatile int currentlyHostedLobbyId,
                          currentlyJoinedLobbyId,
                          currentLocalPlayerId,
                          currentCharacter,
-                         pongLatency;
+                         lastRtt;
 
     private volatile long lastPongDateTime = System.currentTimeMillis();
 
@@ -58,29 +70,19 @@ public class VirtualConnection {
     public void ping() {
         int testId = ThreadLocalRandom.current().nextInt(
                 Constraints.MIN_INT32_ID, Constraints.MAX_INT32_ID);
-        long currTime;
 
         synchronized (lock) {
             if (pendingPingTests.size() == MAX_PENDING_PING_TESTS)
                 pendingPingTests.pop(); // удаляем самый старый Ping - мы уже вряд ли получим на него ответ (Pong)
 
-            currTime = System.currentTimeMillis();
-            pendingPingTests.add(new PingTest(testId, currTime));
-            System.out.println("** TEMP DEBUG ** [1/3] Registered pending ping to "
-                    + addr.getHostAddress() + " : testId = " + testId + ", currTime = " + currTime);
+            pendingPingTests.add(new PingTest(testId, System.currentTimeMillis()));
         }
 
-        System.out.println("** TEMP DEBUG ** [2/3] Sending ping to " + addr.getHostAddress() + ", testId = "
-                + testId + ", millis delay: " + (System.currentTimeMillis() - currTime));
-        NetworkService.ping(this, testId, pongLatency);
-        System.out.println("** TEMP DEBUG ** [3/3] Sent ping to " + addr.getHostAddress() + ", testId = "
-                + testId + ", millis delay: " + (System.currentTimeMillis() - currTime));
+        NetworkService.ping(this, testId, lastRtt);
     }
 
     public void pongReceived(int testId) {
         long currTime = System.currentTimeMillis();
-        System.out.println("** TEMP DEBUG ** (1/2) RECEIVED ping FROM " + addr.getHostAddress() + ", testId = "
-                + testId + ", currTime = " + currTime);
 
         synchronized (lock) {
             PingTest pongedTest = pendingPingTests.stream()
@@ -91,12 +93,66 @@ public class VirtualConnection {
             if (pongedTest != null) { // принимаем только "актуальные" и "не повреждённые" Pong'и
                 lastPongDateTime = currTime;
                 pendingPingTests.remove(pongedTest);
-                pongLatency = (int) (currTime - pongedTest.getSentTime()) / 2; // "/ 2" для ОДНОсторонней задержки
+                lastRtt = (int) (currTime - pongedTest.getSentTime());
 
-                System.out.println("** TEMP DEBUG ** (2/2) ACCEPTED ping FROM " + addr.getHostAddress() + ", testId = "
-                        + testId + ", millis delay = " + (System.currentTimeMillis() - currTime)
-                        + " --> pongLatency := " + pongLatency + " (" + pendingPingTests.size()
-                        + " tests still pending)");
+                System.out.println("** TEMP DEBUG ** " + addr.getHostAddress() + "'s RRT = " + lastRtt + " millis");
+            }
+        }
+    }
+
+    public void enqueueReceive(@NonNull UnwrappedPacketData packetData) {
+        synchronized (lock) {
+            receiveQueue.add(packetData);
+        }
+    }
+
+    public void flushReceiveQueue() {
+        synchronized (lock) {
+            if (!receiveQueue.isEmpty()) {
+                for (UnwrappedPacketData packet : receiveQueue)
+                    srv.getPacketManager().processReceivedPacket(this, packet);
+
+                receiveQueue.clear();
+            }
+        }
+    }
+
+    private void enqueueSend(boolean ensureDelivered, @NonNull Message packet) {
+        synchronized (lock) {
+            if (sendQueue.size() == MAX_SEND_QUEUE_SIZE) {
+                // Отменяем отправку самого "старого" пакета (их накопилось уж слишком много).
+                sendQueue.remove(0);
+                ensureDeliveredStatuses.remove(0);
+            }
+
+            sendQueue.add(packet);
+            ensureDeliveredStatuses.add(ensureDelivered);
+        }
+    }
+
+    public void enqueueSend(@NonNull Message packet) {
+        enqueueSend(false, packet);
+    }
+
+    public void enqueueSendImportant(@NonNull Message packet) {
+        enqueueSend(true, packet);
+    }
+
+    public void flushSendQueue() {
+        synchronized (lock) {
+            if (!sendQueue.isEmpty()) {
+                for (int i = 0; i < sendQueue.size(); i++) {
+                    Message packet = sendQueue.get(i);
+                    boolean ensureDelivered = ensureDeliveredStatuses.get(i);
+
+                    if (ensureDelivered)
+                        sendImportantPacket(packet);
+                    else
+                        sendPacket(packet);
+                }
+
+                sendQueue.clear();
+                ensureDeliveredStatuses.clear();
             }
         }
     }
@@ -131,7 +187,7 @@ public class VirtualConnection {
     }
 
     public boolean isConnectionBad() {
-        return pongLatency                   > GOOD_LATENCY_MILLIS_THRESHOLD
+        return lastRtt                       > GOOD_RTT_THRESHOLD
             || handle.getPacketLossPercent() > GOOD_PACKET_LOSS_PERCENT_THRESHOLD;
     }
 

@@ -29,6 +29,7 @@ public class AwdServerConfig {
             cleanerVirConsMaxIdleMillis,
             cleanerVirConsCleanupPeriodMillis,
 
+            gameTps,
             maxLobbySize,
             pingPeriodMillis;
 

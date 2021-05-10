@@ -1,6 +1,8 @@
 package gg.aswedrown.server.udp;
 
 import gg.aswedrown.net.PacketManager;
+import gg.aswedrown.net.UnwrappedPacketData;
+import gg.aswedrown.server.vircon.VirtualConnection;
 import gg.aswedrown.server.vircon.VirtualConnectionManager;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -55,15 +57,17 @@ public class AwdUdpServer implements UdpServer {
                 // до нужной длины (длины буффера) дополнен хвостом из нулей. Они
                 // нам не нужны. packet.getLength() возвращает точное число полученных
                 // байтов - "обрезаем" буффер до этого числа и получаем "реальный" пакет.
-                byte[] packetData = Arrays.copyOf(buffer, packet.getLength());
+                byte[] rawPacketData = Arrays.copyOf(buffer, packet.getLength());
 
-                if (packetData.length > 0) {
-                    packetRecvExecService.execute(() ->
-                            packetManager.receivePacket(
-                                    virConManager.getVirtualConnection(senderAddr),
-                                    packetData
-                            )
-                    );
+                if (rawPacketData.length > 0) {
+                    VirtualConnection virCon = virConManager.getVirtualConnection(senderAddr);
+
+                    packetRecvExecService.execute(() -> {
+                        UnwrappedPacketData packetData = virCon.receivePacket(rawPacketData);
+
+                        if (packetData != null)
+                            virCon.enqueueReceive(packetData);
+                    });
                 } else
                     log.warn("Ignoring empty packet from {}.", senderAddr.getHostAddress());
             } catch (IOException ex) {

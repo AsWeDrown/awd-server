@@ -34,7 +34,7 @@ public class ConsoleCommandStats extends ConsoleCommand {
             log.info("  Active connections: {}", activeConns);
             log.info("  Authorized connections: {} ({}%)", authdConns,
                     String.format("%.2f", 100.0 * authdConns / activeConns));
-            log.info("  Average latency: {} ms", srv.getVirConManager().getAverageLatency());
+            log.info("  Average RTT: {} ms", srv.getVirConManager().getAverageRtt());
             log.info(FOOTER);
         } else {
             // Статистика об одном конкретном соединении с указанным IP-адресом.
@@ -58,7 +58,7 @@ public class ConsoleCommandStats extends ConsoleCommand {
             log.info(HEADER);
             log.info("  IP address: {}", virCon.getAddr().getHostAddress());
             log.info("  Authorized: {}", virCon.isAuthorized());
-            log.info("  Latency: {} ms", virCon.getPongLatency());
+            log.info("  RTT: {} ms", virCon.getLastRtt());
             log.info("  Packet loss: {}%", String.format("%.2f", virCon.getPacketLossPercent()));
             log.info("  Connection quality: {}", virCon.isConnectionBad() ? "BAD" : "GOOD");
             log.info(FOOTER);

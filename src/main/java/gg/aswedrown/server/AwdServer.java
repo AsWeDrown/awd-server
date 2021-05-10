@@ -1,5 +1,6 @@
 package gg.aswedrown.server;
 
+import gg.aswedrown.game.GameServer;
 import gg.aswedrown.net.PacketManager;
 import gg.aswedrown.server.command.ConsoleCommandDispatcher;
 import gg.aswedrown.server.data.DbInfo;
@@ -61,6 +62,9 @@ public final class AwdServer {
     private Pinger pinger;
 
     @Getter
+    private GameServer gameServer;
+
+    @Getter
     private UdpServer udpServer;
 
     void bootstrap() throws Exception {
@@ -76,6 +80,7 @@ public final class AwdServer {
         setupVirtualConnectivity(); // используется в БД, так что должно делаться до setupDatabase
         setupDatabase();
         setupConsoleCommands();
+        startGameServer();
 
         double startupTookSeconds = (System.currentTimeMillis() - startupBeginTime) / 1000.0D;
         log.info("Startup done! Everything took {} s.", String.format("%.2f", startupTookSeconds));
@@ -142,6 +147,11 @@ public final class AwdServer {
     private void setupConsoleCommands() {
         consoleCmdsDisp = new ConsoleCommandDispatcher(this);
         consoleCmdsDisp.start();
+    }
+
+    private void startGameServer() {
+        gameServer = new GameServer(this);
+        gameServer.startGameLoopInNewThread();
     }
 
     private void setupShutdownHook() {

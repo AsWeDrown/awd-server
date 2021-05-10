@@ -82,8 +82,8 @@ public class NetworkHandle {
                 // sequence number (устанавливаем бит с соотв. номером на единицу).
                 ackBitfield |= 1L << (bitNum - 1); // т.к. идём с единицы, не забываем отнимать эту единицу здесь
 
-        System.out.println("** TEMP DEBUG ** Calculated ack bitfield: "
-                + Long.toString(ackBitfield, 2));
+//        System.out.println("** TEMP DEBUG ** Calculated ack bitfield: "
+//                + Long.toString(ackBitfield, 2));
 
         return ackBitfield;
     }
@@ -105,9 +105,9 @@ public class NetworkHandle {
             long ackBitfield = data.getAckBitfield(); // сведения о получении 32 пакетов до пакета с номером ack
             int bitNum = 1; // начинаем с 1, т.к. 0 - это этот с номером ack; нас интересуют те, что были до него
 
-            System.out.println("** TEMP DEBUG ** Packet received: #" + sequence
-                    + " (current remote seq: #" + remoteSequenceNumber + "), ack: " + ack
-                    + ", ack bitfield: " + Long.toString(ackBitfield, 2) + " ( = " + ackBitfield + " )");
+//            System.out.println("** TEMP DEBUG ** Packet received: #" + sequence
+//                    + " (current remote seq: #" + remoteSequenceNumber + "), ack: " + ack
+//                    + ", ack bitfield: " + Long.toString(ackBitfield, 2) + " ( = " + ackBitfield + " )");
 
             while (ackBitfield > 0) {
                 boolean bitSet = (ackBitfield & 1) == 1;
@@ -145,7 +145,7 @@ public class NetworkHandle {
     private void packetSent(PacketContainer pContainer) {
         // Обновляем локальный sequence number только после успешной отправки этого пакета.
         localSequenceNumber = SequenceNumberMath.add(localSequenceNumber, 1); // поддержка wrap-around
-        System.out.println("** TEMP DEBUG ** Packet sent, new local seq: #" + localSequenceNumber);
+//        System.out.println("** TEMP DEBUG ** Packet sent, new local seq: #" + localSequenceNumber);
 
         // Запоминаем этот пакет (но только в случае успешной отправки).
         // В случае потери пакета это поможет отправить его повторно, но
@@ -179,8 +179,8 @@ public class NetworkHandle {
         // Учитываем доставку пакета в статистике.
         updateDeliveryStat(true);
 
-        System.out.println("** TEMP DEBUG ** Packet delivered: #" + sequence
-                + " | new packet loss: " + packetLossPercent + "%");
+//        System.out.println("** TEMP DEBUG ** Packet delivered: #" + sequence
+//                + " | new packet loss: " + packetLossPercent + "%");
     }
 
     /* Этот метод НЕ гарантирует потокобезопасность. Его вызов должен быть обёрнут в блокирующий блок. */
@@ -197,8 +197,8 @@ public class NetworkHandle {
         // Учитываем потерю пакета в статистике.
         updateDeliveryStat(false);
 
-        System.out.println("** TEMP DEBUG ** Packet possibly lost: #" + pContainer.getOriginalSequence()
-                + " | new packet loss: " + packetLossPercent + "%");
+//        System.out.println("** TEMP DEBUG ** Packet possibly lost: #" + pContainer.getOriginalSequence()
+//                + " | new packet loss: " + packetLossPercent + "%");
     }
 
     /* Этот метод НЕ гарантирует потокобезопасность. Его вызов должен быть обёрнут в блокирующий блок. */
@@ -217,25 +217,25 @@ public class NetworkHandle {
         UnwrappedPacketData unwrappedPacketData;
 
         try {
-            long begin = System.currentTimeMillis();
+//            long begin = System.currentTimeMillis();
 
             unwrappedPacketData = PacketTransformer.unwrap(packetData);
 
-            System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
-                    + " to UNWRAP a " + packetData.length + "-bytes packet");
+//            System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
+//                    + " to UNWRAP a " + packetData.length + "-bytes packet");
 
             if (unwrappedPacketData != null) {
-                begin = System.currentTimeMillis();
+//                begin = System.currentTimeMillis();
                 packetReceived(unwrappedPacketData);
-                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
-                        + " to POST-PROCESS a RECEIVED " + packetData.length + "-bytes packet " +
-                        "(" + unwrappedPacketData.getPacket().getClass().getSimpleName() + ")");
+//                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
+//                        + " to POST-PROCESS a RECEIVED " + packetData.length + "-bytes packet " +
+//                        "(" + unwrappedPacketData.getPacket().getClass().getSimpleName() + ")");
 
                 return unwrappedPacketData; // получили пакет успешно
             } else
                 // Protobuf смог десериализовать полученный пакет, но для него в listeners
                 // не зарегистрировано (в конструкторе этого класса) подходящих PacketListener'ов.
-                log.error("Ignoring unknown packet from {} ({} bytes)- no implemented transformer.",
+                log.error("Ignoring unknown packet from {} ({} bytes) - failed to unwrap.",
                         addr.getHostAddress(), packetData.length);
         } catch (InvalidProtocolBufferException ex) {
             log.error("Ignoring invalid packet from {} ({} bytes).",
@@ -257,19 +257,19 @@ public class NetworkHandle {
                         calculateAckBitfield()
                 );
 
-                System.out.println("** TEMP DEBUG ** Sending packet #" + localSequenceNumber
-                        + ", acking #" + remoteSequenceNumber);
-
-                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
-                        + " to CONSTRUCT a " + packet.getClass().getSimpleName() + " packet");
+//                System.out.println("** TEMP DEBUG ** Sending packet #" + localSequenceNumber
+//                        + ", acking #" + remoteSequenceNumber);
+//
+//                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
+//                        + " to CONSTRUCT a " + packet.getClass().getSimpleName() + " packet");
 
                 begin = System.currentTimeMillis();
 
                 // Отправляем пакет по UDP.
                 udpServer.sendRaw(addr, data);
 
-                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
-                        + " to SEND a " + packet.getClass().getSimpleName() + " packet");
+//                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
+//                        + " to SEND a " + packet.getClass().getSimpleName() + " packet");
 
                 begin = System.currentTimeMillis();
 
@@ -277,8 +277,8 @@ public class NetworkHandle {
                 packetSent(new PacketContainer(
                         ensureDelivered, localSequenceNumber, packet)); // "протоколообразующие" манипуляции
 
-                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
-                        + " to POST-PROCESS a " + packet.getClass().getSimpleName() + " packet");
+//                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
+//                        + " to POST-PROCESS a " + packet.getClass().getSimpleName() + " packet");
 
                 return true; // пакет отправлен успешно
             } catch (IOException ex) {

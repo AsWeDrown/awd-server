@@ -79,7 +79,7 @@ public class MongoLobbyRepository implements LobbyRepository {
             Map<String, String> membersCharacters = getMembersCharacters(lobbyId);
 
             membersNames.put(playerIdStr, playerName);
-            membersCharacters.put(playerIdStr, playerName);
+            membersCharacters.put(playerIdStr, Integer.toString(character));
 
             db.updateOne(DbInfo.Lobbies.COLLECTION_NAME,
                     DbInfo.Lobbies.LOBBY_ID, lobbyId,

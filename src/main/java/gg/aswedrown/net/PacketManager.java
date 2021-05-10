@@ -71,19 +71,22 @@ public class PacketManager {
         }
     }
 
-    public void receivePacket(@NonNull VirtualConnection virCon, @NonNull byte[] packetData) {
-        UnwrappedPacketData unwrappedPacketData = virCon.receivePacket(packetData);
-
-        if (unwrappedPacketData != null) { // null - внутренняя ошибка получения
+    public void processReceivedPacket(@NonNull VirtualConnection virCon,
+                                      UnwrappedPacketData packetData) {
+        if (packetData != null) { // null --> внутренняя ошибка получения
             try {
                 // Кажется, всё в порядке. Отправляем пакет на обработку соответствующему PacketListener'у.
-                listeners.get(unwrappedPacketData.getPacketType())
-                        .packetReceived(virCon, unwrappedPacketData.getPacket());
+                PacketListener<?> listener = listeners.get(packetData.getPacketType());
+
+                if (listener != null)
+                    listener.packetReceived(virCon, packetData.getPacket());
+                else
+                    log.error("Ignoring a {} packet from {} - no corresponding packet listener wired.",
+                            packetData.getPacketType(), virCon.getAddr().getHostAddress());
             } catch (Exception ex) {
-                log.error("Failed to process a {} packet from {} ({} bytes) " +
+                log.error("Failed to process a {} packet from {} " +
                                 "due to an internal error in the corresponding packet listener.",
-                        unwrappedPacketData.getPacketType(), virCon.getAddr().getHostAddress(),
-                        packetData.length, ex);
+                        packetData.getPacketType(), virCon.getAddr().getHostAddress(), ex);
             }
         }
     }

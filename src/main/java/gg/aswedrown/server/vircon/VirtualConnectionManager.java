@@ -72,11 +72,18 @@ public class VirtualConnectionManager {
         virConMap.remove(addr);
     }
 
-    public long getAverageLatency() {
+    public long getAverageRtt() {
         return (long) virConMap.values().stream()
-                .mapToLong(VirtualConnection::getPongLatency)
+                .mapToLong(VirtualConnection::getLastRtt)
                 .average()
                 .orElse(0.0);
+    }
+
+    public void flushAllPacketQueues() {
+        virConMap.values().forEach(virCon -> {
+            virCon.flushSendQueue();
+            virCon.flushReceiveQueue();
+        });
     }
 
     void pingAll() {
