@@ -156,7 +156,9 @@ public class LobbyManager {
             boolean removed = removeMember(lobbyId, playerId, virCon);
 
             if (removed) {
-                notifyMembersListUpdated(lobbyId);
+                if (repo.lobbyExists(lobbyId)) // т.к. при выходе хоста комната окажется удалена
+                    notifyMembersListUpdated(lobbyId);
+
                 log.info("Player {} left lobby {}.", playerId, lobbyId);
 
                 return LeaveResult.SUCCESS;
@@ -246,6 +248,10 @@ public class LobbyManager {
             virCon.setCurrentlyJoinedLobbyId(0);
             virCon.setCurrentLocalPlayerId(0);
             virCon.setCurrentCharacter(0);
+
+            if (targetPlayerId == repo.getHost(lobbyId))
+                // Удаляем комнату при выходе её хоста.
+                deleteLobby(lobbyId);
         }
 
         return actuallyRemoved;

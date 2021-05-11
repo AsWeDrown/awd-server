@@ -68,8 +68,17 @@ public class VirtualConnectionManager {
     }
 
     public void closeVirtualConnection(@NonNull InetAddress addr) {
-        log.info("Virtual connection closed: {}.", addr.getHostAddress());
-        virConMap.remove(addr);
+        VirtualConnection virCon = virConMap.get(addr);
+
+        if (virCon != null) {
+            virConMap.remove(addr);
+
+            try {
+                virCon.connectionClosed();
+            } catch (Exception ex) {
+                log.error("Error in connectionClosed() ({}):", addr.getHostAddress(), ex);
+            }
+        }
     }
 
     public long getAverageRtt() {

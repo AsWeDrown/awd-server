@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
 import java.util.ArrayDeque;
@@ -18,6 +19,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Slf4j
 @Getter @Setter
 public class VirtualConnection {
 
@@ -189,6 +191,14 @@ public class VirtualConnection {
     public boolean isConnectionBad() {
         return lastRtt                       > GOOD_RTT_THRESHOLD
             || handle.getPacketLossPercent() > GOOD_PACKET_LOSS_PERCENT_THRESHOLD;
+    }
+
+    public void connectionClosed() {
+        log.info("Virtual connection closed: {}.", addr.getHostAddress());
+
+        if (currentlyJoinedLobbyId != 0)
+            srv.getLobbyManager().leaveFromLobby(
+                    this, currentlyJoinedLobbyId, currentLocalPlayerId);
     }
 
 }
