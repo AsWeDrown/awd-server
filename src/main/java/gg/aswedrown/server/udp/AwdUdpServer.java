@@ -1,6 +1,7 @@
 package gg.aswedrown.server.udp;
 
 import gg.aswedrown.net.PacketManager;
+import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.net.UnwrappedPacketData;
 import gg.aswedrown.server.vircon.VirtualConnection;
 import gg.aswedrown.server.vircon.VirtualConnectionManager;
@@ -38,7 +39,7 @@ public class AwdUdpServer implements UdpServer {
     @Override
     public void start() throws SocketException {
         log.info("Starting UDP server on port {}. Buffer size: {}.", port, bufferSize);
-        log.info("Protocol version: {}.", PacketManager.PROTOCOL_VERSION);
+        log.info("Server protocol version: {}.", PacketManager.PROTOCOL_VERSION);
 
         running = true;
         udpSocket = new DatagramSocket(port);
@@ -65,8 +66,13 @@ public class AwdUdpServer implements UdpServer {
                     packetRecvExecService.execute(() -> {
                         UnwrappedPacketData packetData = virCon.receivePacket(rawPacketData);
 
-                        if (packetData != null)
-                            virCon.enqueueReceive(packetData);
+                        if (packetData != null) {
+                            if (packetData.getPacketType() == PacketWrapper.PacketCase.PONG)
+                                // Для пакетов Ping/Pong используем мгновенные отправку/получение.
+                                packetManager.processReceivedPacket(virCon, packetData);
+                            else
+                                virCon.enqueueReceive(packetData);
+                        }
                     });
                 } else
                     log.warn("Ignoring empty packet from {}.", senderAddr.getHostAddress());

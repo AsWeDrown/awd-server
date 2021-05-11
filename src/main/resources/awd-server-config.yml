@@ -38,7 +38,7 @@ executorThreadsKeepAliveSeconds: 60 # 1 минута
 udpServerPort: 23132
 
 # Размер буффера приёмника в байтах (максимальный размер сообщения, которое можно принять за раз целиком).
-udpServerBufferSize: 1024
+udpServerBufferSize: 1200
 
 
 
@@ -56,10 +56,10 @@ cleanerLobbiesMaxIdleMillis: 1200000 # 20 минут
 cleanerLobbiesCleanupPeriodMillis: 600000 # 10 минут
 
 # Максимальное время жизни бездействующих виртуальных соединений.
-cleanerVirConsMaxIdleMillis: 60000 # 1 минута
+cleanerVirConsMaxIdleMillis: 10000 # 10 секунд
 
 # Периодичность чистки виртуальных соединений.
-cleanerVirConsCleanupPeriodMillis: 15000 # 15 секунд
+cleanerVirConsCleanupPeriodMillis: 5000 # 5 секунд
 
 
 

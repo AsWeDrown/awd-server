@@ -47,7 +47,7 @@ public class NetworkService {
     }
 
     public static void ping(@NonNull VirtualConnection virCon, int testId, int rtt) {
-        virCon.enqueueSend(Ping.newBuilder()
+        virCon.sendPacket(Ping.newBuilder() // Для пакетов Ping/Pong используем мгновенные отправку/получение.
                 .setTestId(testId)
                 .setRtt(rtt)
                 .build()
