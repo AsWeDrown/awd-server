@@ -59,9 +59,15 @@ public class VirtualConnectionManager {
         VirtualConnection virCon = virConMap.get(addr);
 
         if (virCon == null) {
-            log.info("Virtual connection established: {}.", addr.getHostAddress());
-            virCon = new VirtualConnection(srv, addr);
-            virConMap.put(addr, virCon);
+            // Виртуального соединения, связанного с этим IP-адресом, ещё нет. Пытаемся открыть его.
+            if (virConMap.size() < srv.getConfig().getUdpMaxVirtualConnections()) {
+                // Свободные места ещё есть - открываем.
+                log.info("Virtual connection established: {}.", addr.getHostAddress());
+                virCon = new VirtualConnection(srv, addr);
+                virConMap.put(addr, virCon);
+            } else
+                // Свободных мест больше нет - возвращаем null (отказываем в соединении).
+                log.warn("Virtual connection denied: {} (the server is full).", addr.getHostAddress());
         }
 
         return virCon;
@@ -88,11 +94,12 @@ public class VirtualConnectionManager {
                 .orElse(0.0);
     }
 
-    public void flushAllPacketQueues() {
-        virConMap.values().forEach(virCon -> {
-            virCon.flushSendQueue();
-            virCon.flushReceiveQueue();
-        });
+    public void flushAllReceiveQueues() {
+        virConMap.values().forEach(VirtualConnection::flushReceiveQueue);
+    }
+
+    public void flushAllSendQueues() {
+        virConMap.values().forEach(VirtualConnection::flushSendQueue);
     }
 
     void pingAll() {

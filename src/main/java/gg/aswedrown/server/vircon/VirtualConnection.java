@@ -23,7 +23,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Getter @Setter
 public class VirtualConnection {
 
-    private static final int   MAX_SEND_QUEUE_SIZE                = 10  ;
+    private static final int   MAX_SEND_QUEUE_SIZE                = 20  ;
     private static final int   MAX_PENDING_PING_TESTS             = 5   ;
     private static final int   GOOD_RTT_THRESHOLD                 = 99  ;
     private static final float GOOD_PACKET_LOSS_PERCENT_THRESHOLD = 5.0f;
@@ -197,8 +197,7 @@ public class VirtualConnection {
         log.info("Virtual connection closed: {}.", addr.getHostAddress());
 
         if (currentlyJoinedLobbyId != 0)
-            srv.getLobbyManager().leaveFromLobby(
-                    this, currentlyJoinedLobbyId, currentLocalPlayerId);
+            srv.getLobbyManager().leaveFromLobby(this);
     }
 
 }

@@ -71,4 +71,41 @@ public class NetworkService {
         );
     }
 
+    public static void beginPlayStateResponse(@NonNull VirtualConnection virCon, int result) {
+        virCon.enqueueSendImportant(BeginPlayStateResponse.newBuilder()
+                .setStatusCode(result)
+                .build()
+        );
+    }
+
+    public static void updateDimensionCommand(@NonNull VirtualConnection virCon, int dimension) {
+        virCon.enqueueSendImportant(UpdateDimensionCommand.newBuilder()
+                .setDimension(dimension)
+                .build()
+        );
+    }
+
+    public static void joinWorldCommand(@NonNull VirtualConnection virCon) {
+        virCon.enqueueSendImportant(JoinWorldCommand.newBuilder()
+                .build()
+        );
+    }
+
+    public static void spawnEntity(@NonNull VirtualConnection virCon,
+                                   int entityType, int entityId, @NonNull Map<String, String> entityData) {
+        virCon.enqueueSendImportant(SpawnEntity.newBuilder()
+                .setEntityType(entityType)
+                .setEntityId(entityId)
+                .putAllEntityData(entityData)
+                .build()
+        );
+    }
+
+    public static void despawnEntity(@NonNull VirtualConnection virCon, int entityId) {
+        virCon.enqueueSendImportant(DespawnEntity.newBuilder()
+                .setEntityId(entityId)
+                .build()
+        );
+    }
+
 }

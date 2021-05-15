@@ -23,6 +23,7 @@ public class AwdServerConfig {
 
             udpServerPort,
             udpServerBufferSize,
+            udpMaxVirtualConnections,
 
             cleanerLobbiesMaxIdleMillis,
             cleanerLobbiesCleanupPeriodMillis,
@@ -31,6 +32,7 @@ public class AwdServerConfig {
 
             gameTps,
             maxLobbySize,
-            pingPeriodMillis;
+            pingPeriodMillis,
+            minPlayersToStart;
 
 }

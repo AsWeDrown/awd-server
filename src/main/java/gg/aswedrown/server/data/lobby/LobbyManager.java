@@ -1,5 +1,10 @@
 package gg.aswedrown.server.data.lobby;
 
+import gg.aswedrown.game.ActiveGameLobby;
+import gg.aswedrown.game.GameState;
+import gg.aswedrown.game.entity.EntityPlayer;
+import gg.aswedrown.game.world.World;
+import gg.aswedrown.game.world.Worlds;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.Constraints;
@@ -9,14 +14,12 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 public class LobbyManager {
-    
+
     private static final Map<Integer, String>  EMPTY_INT_STR_MAP = new HashMap<>();
     private static final Map<Integer, Integer> EMPTY_INT_INT_MAP = new HashMap<>();
 
@@ -141,16 +144,17 @@ public class LobbyManager {
         }
     }
 
-    public int leaveFromLobby(@NonNull VirtualConnection virCon, int lobbyId, int playerId) {
+    public int leaveFromLobby(@NonNull VirtualConnection virCon) {
         if (!virCon.isAuthorized())
             return LeaveResult.UNAUTHORIZED;
 
         try {
-            int curJoinedLobby = virCon.getCurrentlyJoinedLobbyId();
-            int curLocalPlayerId = virCon.getCurrentLocalPlayerId();
+            int lobbyId = virCon.getCurrentlyJoinedLobbyId();
 
-            if (curJoinedLobby != lobbyId || curLocalPlayerId != playerId)
-                return LeaveResult.DENIED;
+            if (lobbyId == 0)
+                return LeaveResult.NOT_IN_LOBBY;
+
+            int playerId = virCon.getCurrentLocalPlayerId();
 
             // Исключаем.
             boolean removed = removeMember(lobbyId, playerId, virCon);
@@ -163,23 +167,11 @@ public class LobbyManager {
 
                 return LeaveResult.SUCCESS;
             } else
-                return LeaveResult.DENIED;
+                return LeaveResult.NOT_IN_LOBBY;
         } catch (Exception ex) {
             log.error("Unhandled exception in leaveFromLobby:", ex);
             return LeaveResult.INTERNAL_ERROR;
         }
-    }
-
-    private Map<Integer, String> convertMembersNamesMap(@NonNull Map<String, String> strToStrMap) {
-        Map<Integer, String> intToStrMap = new HashMap<>();
-        strToStrMap.forEach((k, v) -> intToStrMap.put(Integer.parseInt(k), v));
-        return intToStrMap;
-    }
-
-    private Map<Integer, Integer> convertMembersCharactersMap(@NonNull Map<String, String> strToStrMap) {
-        Map<Integer, Integer> intToIntMap = new HashMap<>();
-        strToStrMap.forEach((k, v) -> intToIntMap.put(Integer.parseInt(k), Integer.parseInt(v)));
-        return intToIntMap;
     }
 
     public void deleteLobby(int lobbyId) {
@@ -277,6 +269,115 @@ public class LobbyManager {
         return actuallyKicked;
     }
 
+    public int beginPlayState(@NonNull VirtualConnection virCon, @NonNull String saveId) {
+        if (!virCon.isAuthorized())
+            return BeginPlayStateResult.UNAUTHORIZED;
+
+        try {
+            int lobbyId = virCon.getCurrentlyJoinedLobbyId();
+
+            if (lobbyId == 0)
+                return BeginPlayStateResult.NOT_IN_LOBBY;
+
+            int playerId = virCon.getCurrentLocalPlayerId();
+
+            if (playerId != repo.getHost(lobbyId))
+                return BeginPlayStateResult.NOT_HOST;
+
+            Map<Integer, String> membersNames
+                    = convertMembersNamesMap(repo.getMembersNames(lobbyId));
+
+            if (membersNames.size() < srv.getConfig().getMinPlayersToStart())
+                return BeginPlayStateResult.NOT_ENOUGH_PLAYERS;
+
+            if (saveId.equals("0")) {
+                // Новая игра.
+                newGame(lobbyId, membersNames);
+                return BeginPlayStateResult.SUCCESS;
+            } else {
+                // Загрузка игры из сохранения.
+                // TODO: 15.05.2021 implement
+                throw new UnsupportedOperationException("not implemented (TODO)");
+            }
+        } catch (Exception ex) {
+            log.error("Unhandled exception in beginPlayState:", ex);
+            return BeginPlayStateResult.INTERNAL_ERROR;
+        }
+    }
+
+    private void newGame(int lobbyId, @NonNull Map<Integer, String> membersNames) {
+        // Создаём сущности игроков.
+        Collection<EntityPlayer> players = new ArrayList<>();
+        Map<Integer, Integer> membersCharacters
+                = convertMembersCharactersMap(repo.getMembersCharacters(lobbyId));
+
+        for (int playerId : membersNames.keySet()) {
+            VirtualConnection playerVirCon = srv.getVirConManager()
+                    .resolveVirtualConnection(lobbyId, playerId);
+
+            if (playerVirCon == null)
+                throw new IllegalStateException(
+                        "unresolved virtual connection (lobby: " + lobbyId + ", player: " + playerId + ")");
+
+            EntityPlayer player = new EntityPlayer(
+                    playerId, membersNames.get(playerId),
+                    membersCharacters.get(playerId), playerVirCon
+            );
+
+            players.add(player);
+        }
+
+        // Регистрируем комнату как "готовую к началу игры" (в стадии "подготовки" к игре).
+        ActiveGameLobby lobby = new ActiveGameLobby(lobbyId, players);
+        World world = new World(lobbyId, Worlds.DIM_SUBMARINE_BEGIN);
+        players.forEach(world::addEntity);
+        lobby.setWorld(world.getDimension(), world);
+
+        repo.setGameState(lobbyId, GameState.PLAY_STATE);
+        srv.getGameServer().registerActiveGameLobby(lobby);
+        log.info("Beginning play state in lobby {} ({} players).", lobbyId, players.size());
+
+        // Ждём 3 секунды (чтобы наш ответ, BeginPlayStateResponse, точно успел дойти до хоста комнаты),
+        // после чего рассылаем всем игрокам в комнате команду на загрузку начального измерения.
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                players.forEach(player -> NetworkService
+                        .updateDimensionCommand(player.getVirCon(), player.getCurrentDimension()));
+            }
+        }, 3000);
+    }
+
+    public void updateDimensionComplete(@NonNull VirtualConnection virCon) {
+        if (virCon.isAuthorized() && virCon.getCurrentlyJoinedLobbyId() != 0) {
+            ActiveGameLobby lobby = srv.getGameServer()
+                    .getActiveGameLobby(virCon.getCurrentlyJoinedLobbyId());
+
+            if (lobby != null)
+                lobby.playerLoadedWorld(virCon.getCurrentLocalPlayerId());
+        }
+    }
+
+    public void joinWorldComplete(@NonNull VirtualConnection virCon) {
+        if (virCon.isAuthorized() && virCon.getCurrentlyJoinedLobbyId() != 0) {
+            ActiveGameLobby lobby = srv.getGameServer()
+                    .getActiveGameLobby(virCon.getCurrentlyJoinedLobbyId());
+
+            if (lobby != null)
+                lobby.playerJoinedWorld(virCon.getCurrentLocalPlayerId());
+        }
+    }
+
+    public void updatePlayerInputs(@NonNull VirtualConnection virCon, long inputsBitfield) {
+        if (virCon.isAuthorized() && virCon.getCurrentlyJoinedLobbyId() != 0) {
+            ActiveGameLobby lobby = srv.getGameServer()
+                    .getActiveGameLobby(virCon.getCurrentlyJoinedLobbyId());
+
+            if (lobby != null)
+                lobby.updatePlayerInputs(virCon.getCurrentLocalPlayerId(), inputsBitfield);
+        }
+    }
+
     private int generateNewLobbyId() {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         int id;
@@ -311,6 +412,18 @@ public class LobbyManager {
         }
 
         throw new IllegalStateException("out of characters (lobby size exceeded?)");
+    }
+
+    private static Map<Integer, String> convertMembersNamesMap(@NonNull Map<String, String> strToStrMap) {
+        Map<Integer, String> intToStrMap = new HashMap<>();
+        strToStrMap.forEach((k, v) -> intToStrMap.put(Integer.parseInt(k), v));
+        return intToStrMap;
+    }
+
+    private static Map<Integer, Integer> convertMembersCharactersMap(@NonNull Map<String, String> strToStrMap) {
+        Map<Integer, Integer> intToIntMap = new HashMap<>();
+        strToStrMap.forEach((k, v) -> intToIntMap.put(Integer.parseInt(k), Integer.parseInt(v)));
+        return intToIntMap;
     }
 
     @RequiredArgsConstructor @Getter
@@ -375,9 +488,24 @@ public class LobbyManager {
 
         private static final int SUCCESS = 1;
 
-        private static final int DENIED         =   -1;
+        private static final int NOT_IN_LOBBY   =   -1;
         private static final int UNAUTHORIZED   = -401;
         private static final int INTERNAL_ERROR = -999;
+    }
+
+    public static final class BeginPlayStateResult {
+        private BeginPlayStateResult() {}
+
+        private static final int SUCCESS = 1;
+
+        private static final int NOT_ENOUGH_PLAYERS        =   -1;
+        private static final int UNKNOWN_SAVE              =   -2;
+        private static final int PLAYERS_INCOMPATIBLE_SAVE =   -3;
+        private static final int VERSION_INCOMPATIBLE_SAVE =   -4;
+        private static final int NOT_IN_LOBBY              =   -5;
+        private static final int NOT_HOST                  =   -6;
+        private static final int UNAUTHORIZED              = -401;
+        private static final int INTERNAL_ERROR            = -999;
     }
 
 }

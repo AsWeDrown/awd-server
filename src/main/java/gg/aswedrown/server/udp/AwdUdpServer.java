@@ -63,6 +63,11 @@ public class AwdUdpServer implements UdpServer {
                 if (rawPacketData.length > 0) {
                     VirtualConnection virCon = virConManager.getVirtualConnection(senderAddr);
 
+                    if (virCon == null)
+                        // Виртуальное соединение не было открыто (например, потому, что сервер переполнен).
+                        // В таком случае просто отклоняем полученный пакет.
+                        return;
+
                     packetRecvExecService.execute(() -> {
                         UnwrappedPacketData packetData = virCon.receivePacket(rawPacketData);
 

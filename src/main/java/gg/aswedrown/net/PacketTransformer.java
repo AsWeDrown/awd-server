@@ -91,6 +91,24 @@ public final class PacketTransformer {
         PacketWrapper.PacketCase packetType = getPacketCase(packet.getClass());
 
         switch (packetType) {
+            case PING:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setPing((Ping) packet)
+                        .build()
+                        .toByteArray();
+
+            case PONG:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setPong((Pong) packet)
+                        .build()
+                        .toByteArray();
+
             case HANDSHAKE_REQUEST:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
@@ -181,30 +199,93 @@ public final class PacketTransformer {
                         .build()
                         .toByteArray();
 
-            case KEEP_ALIVE:
+            case BEGIN_PLAY_STATE_REQUEST:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
                         .setAck(ack)
                         .setAckBitfield(ackBitfield)
-                        .setKeepAlive((KeepAlive) packet)
+                        .setBeginPlayStateRequest((BeginPlayStateRequest) packet)
                         .build()
                         .toByteArray();
 
-            case PING:
+            case BEGIN_PLAY_STATE_RESPONSE:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
                         .setAck(ack)
                         .setAckBitfield(ackBitfield)
-                        .setPing((Ping) packet)
+                        .setBeginPlayStateResponse((BeginPlayStateResponse) packet)
                         .build()
                         .toByteArray();
 
-            case PONG:
+            case UPDATE_DIMENSION_COMMAND:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
                         .setAck(ack)
                         .setAckBitfield(ackBitfield)
-                        .setPong((Pong) packet)
+                        .setUpdateDimensionCommand((UpdateDimensionCommand) packet)
+                        .build()
+                        .toByteArray();
+
+            case UPDATE_DIMENSION_COMPLETE:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setUpdateDimensionComplete((UpdateDimensionComplete) packet)
+                        .build()
+                        .toByteArray();
+
+            case JOIN_WORLD_COMMAND:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setJoinWorldCommand((JoinWorldCommand) packet)
+                        .build()
+                        .toByteArray();
+
+            case JOIN_WORLD_COMPLETE:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setJoinWorldComplete((JoinWorldComplete) packet)
+                        .build()
+                        .toByteArray();
+
+            case SPAWN_ENTITY:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setSpawnEntity((SpawnEntity) packet)
+                        .build()
+                        .toByteArray();
+
+            case DESPAWN_ENTITY:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setDespawnEntity((DespawnEntity) packet)
+                        .build()
+                        .toByteArray();
+
+            case UPDATE_PLAYER_INPUTS:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setUpdatePlayerInputs((UpdatePlayerInputs) packet)
+                        .build()
+                        .toByteArray();
+
+            case UPDATE_ENTITY_POSITION:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setUpdateEntityPosition((UpdateEntityPosition) packet)
                         .build()
                         .toByteArray();
 
@@ -227,6 +308,14 @@ public final class PacketTransformer {
         PacketWrapper.PacketCase packetType = wrapper.getPacketCase();
 
         switch (packetType) {
+            case PING:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getPing());
+
+            case PONG:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getPong());
+
             case HANDSHAKE_REQUEST:
                 return new UnwrappedPacketData(
                         sequence, ack, ackBitfield, packetType, wrapper.getHandshakeRequest());
@@ -267,17 +356,45 @@ public final class PacketTransformer {
                 return new UnwrappedPacketData(
                         sequence, ack, ackBitfield, packetType, wrapper.getUpdatedMembersList());
 
-            case KEEP_ALIVE:
+            case BEGIN_PLAY_STATE_REQUEST:
                 return new UnwrappedPacketData(
-                        sequence, ack, ackBitfield, packetType, wrapper.getKeepAlive());
+                        sequence, ack, ackBitfield, packetType, wrapper.getBeginPlayStateRequest());
 
-            case PING:
+            case BEGIN_PLAY_STATE_RESPONSE:
                 return new UnwrappedPacketData(
-                        sequence, ack, ackBitfield, packetType, wrapper.getPing());
+                        sequence, ack, ackBitfield, packetType, wrapper.getBeginPlayStateResponse());
 
-            case PONG:
+            case UPDATE_DIMENSION_COMMAND:
                 return new UnwrappedPacketData(
-                        sequence, ack, ackBitfield, packetType, wrapper.getPong());
+                        sequence, ack, ackBitfield, packetType, wrapper.getUpdateDimensionCommand());
+
+            case UPDATE_DIMENSION_COMPLETE:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getUpdateDimensionComplete());
+
+            case JOIN_WORLD_COMMAND:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getJoinWorldCommand());
+
+            case JOIN_WORLD_COMPLETE:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getJoinWorldComplete());
+
+            case SPAWN_ENTITY:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getSpawnEntity());
+
+            case DESPAWN_ENTITY:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getDespawnEntity());
+
+            case UPDATE_PLAYER_INPUTS:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getUpdatePlayerInputs());
+
+            case UPDATE_ENTITY_POSITION:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getUpdateEntityPosition());
 
             default:
                 // Неизвестный пакет - он будет проигнорирован (не передан никакому PacketListener'у).

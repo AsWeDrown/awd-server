@@ -1,10 +1,12 @@
-package gg.aswedrown.server.packetlistener;
+package gg.aswedrown.server.packetlistener.lobby;
 
 import gg.aswedrown.net.CreateLobbyRequest;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.lobby.LobbyManager;
+import gg.aswedrown.server.packetlistener.PacketListener;
+import gg.aswedrown.server.packetlistener.RegisterPacketListener;
 import gg.aswedrown.server.vircon.VirtualConnection;
 
 @RegisterPacketListener (PacketWrapper.PacketCase.CREATE_LOBBY_REQUEST)

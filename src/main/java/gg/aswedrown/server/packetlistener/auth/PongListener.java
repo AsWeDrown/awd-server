@@ -1,8 +1,10 @@
-package gg.aswedrown.server.packetlistener;
+package gg.aswedrown.server.packetlistener.auth;
 
 import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.net.Pong;
 import gg.aswedrown.server.AwdServer;
+import gg.aswedrown.server.packetlistener.PacketListener;
+import gg.aswedrown.server.packetlistener.RegisterPacketListener;
 import gg.aswedrown.server.vircon.VirtualConnection;
 
 @RegisterPacketListener (PacketWrapper.PacketCase.PONG)
@@ -15,8 +17,6 @@ public class PongListener extends PacketListener<Pong> {
     @Override
     protected void processPacket(VirtualConnection virCon, Pong packet) throws Exception {
         virCon.pongReceived(packet.getTestId());
-
-        System.out.println("** TEMP DEBUG ** Pong received: " + virCon.getAddr().getHostAddress());
     }
 
 }

@@ -1,10 +1,12 @@
-package gg.aswedrown.server.packetlistener;
+package gg.aswedrown.server.packetlistener.auth;
 
 import gg.aswedrown.net.HandshakeRequest;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.net.PacketManager;
 import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.server.AwdServer;
+import gg.aswedrown.server.packetlistener.PacketListener;
+import gg.aswedrown.server.packetlistener.RegisterPacketListener;
 import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.extern.slf4j.Slf4j;
 

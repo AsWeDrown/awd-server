@@ -1,11 +1,11 @@
 package gg.aswedrown.game;
 
 import gg.aswedrown.server.AwdServer;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -18,9 +18,12 @@ public class GameServer {
 
     private final AtomicLong currentTick = new AtomicLong(0L);
 
+    private final Collection<ActiveGameLobby> activeGameLobbies = new ArrayList<>();
+    private final Object activeGameLobbiesLock = new Object();
+
     public void startGameLoopInNewThread() {
         long tickPeriod = 1000L / srv.getConfig().getGameTps();
-        log.info("Starting game loop ({} TPS).", srv.getConfig().getGameTps());
+        log.info("Starting game loop at {} TPS.", srv.getConfig().getGameTps());
 
         new Timer().schedule(new TimerTask() {
             @Override
@@ -33,11 +36,43 @@ public class GameServer {
     private void runGameLoop() {
         currentTick.incrementAndGet();
 
-        flushAllPacketQueues();
+        srv.getVirConManager().flushAllReceiveQueues(); // обрабатываем пакеты, полученные от игроков
+        update();                                       // выполняем обновление (и, м.б., ставим на отправку пакеты)
+        srv.getVirConManager().flushAllSendQueues();    // отправляем пакеты, поставленые в очередь после обновления
     }
 
-    private void flushAllPacketQueues() {
-        srv.getVirConManager().flushAllPacketQueues();
+    private void update() {
+        synchronized (activeGameLobbiesLock) {
+            activeGameLobbies.stream().filter(ActiveGameLobby::isGameBegun).forEach(lobby -> {
+                try {
+                    lobby.update();
+                } catch (Exception ex) {
+                    log.error("Unhandled exception during game state update in lobby {}:",
+                            lobby.getLobbyId(), ex);
+                }
+            });
+        }
+    }
+
+    public ActiveGameLobby getActiveGameLobby(int lobbyId) {
+        synchronized (activeGameLobbiesLock) {
+            return activeGameLobbies.stream()
+                    .filter(lobby -> lobby.getLobbyId() == lobbyId)
+                    .findAny()
+                    .orElse(null);
+        }
+    }
+
+    public void registerActiveGameLobby(@NonNull ActiveGameLobby lobby) {
+        synchronized (activeGameLobbiesLock) {
+            activeGameLobbies.add(lobby);
+        }
+    }
+
+    public void unregisterActiveGameLobby(@NonNull ActiveGameLobby lobby) {
+        synchronized (activeGameLobbiesLock) {
+            activeGameLobbies.remove(lobby);
+        }
     }
 
 }

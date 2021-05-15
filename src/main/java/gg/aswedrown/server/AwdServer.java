@@ -90,6 +90,9 @@ public final class AwdServer {
     }
 
     private void loadConfig() throws IOException {
+
+        // Загрузка конфига
+
         File configFile = new File(AwdServerConfig.FILE_NAME);
 
         if (!configFile.exists()) {
@@ -112,10 +115,17 @@ public final class AwdServer {
             config = new Yaml().loadAs(reader, AwdServerConfig.class);
         }
 
+        // Базовая валидация конфига
+
         if (config.getSchemaVersion() != AwdServerConfig.SCHEMA_VERSION)
             throw new IllegalArgumentException(
                     "incompatible configuration file, aborting startup; file schema: "
                             + config.getSchemaVersion() + ", server schema: " + AwdServerConfig.SCHEMA_VERSION);
+
+        if (config.getUdpMaxVirtualConnections() >= config.getExecutorMaxThreads())
+            throw new IllegalArgumentException(
+                    "invalid configuration: udpMaxVirtualConnections must be less than executorMaxThreads");
+
     }
 
     private void setupExecutor() {
