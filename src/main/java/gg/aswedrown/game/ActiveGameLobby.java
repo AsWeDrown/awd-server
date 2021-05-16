@@ -2,6 +2,7 @@ package gg.aswedrown.game;
 
 import gg.aswedrown.game.entity.Entity;
 import gg.aswedrown.game.entity.EntityPlayer;
+import gg.aswedrown.game.profiling.TpsMeter;
 import gg.aswedrown.game.world.World;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.server.AwdServer;
@@ -33,6 +34,25 @@ public class ActiveGameLobby {
 
     private final AtomicLong currentTick  = new AtomicLong(0L);
     private final AtomicLong lastPingTick = new AtomicLong(0L);
+
+    @Getter
+    private final TpsMeter tpsMeter = new TpsMeter();
+
+    public int getPlayers() {
+        return players.size();
+    }
+
+    public int getReadyPlayers() {
+        return (int) players.stream().filter(EntityPlayer::isReady).count();
+    }
+
+    public int getJoinedWorldPlayers() {
+        return (int) players.stream().filter(EntityPlayer::isJoinedWorld).count();
+    }
+
+    public int getDimensions() {
+        return dimensions.size();
+    }
 
     public EntityPlayer getPlayer(int playerId) {
         return players.stream()
@@ -199,6 +219,7 @@ public class ActiveGameLobby {
     @SuppressWarnings ("JavadocReference")
     private void update() {
         currentTick.incrementAndGet();
+        tpsMeter.onUpdate();
 
         srv.getVirConManager().flushAllReceiveQueues(); // обрабатываем пакеты, полученные от игроков
         updateGameState();                              // выполняем обновление (и, м.б., ставим на отправку пакеты)

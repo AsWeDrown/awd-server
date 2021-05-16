@@ -15,9 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
+import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
@@ -25,9 +24,9 @@ import java.util.concurrent.ThreadLocalRandom;
 public class VirtualConnection {
 
     private static final int   MAX_SEND_QUEUE_SIZE                = 20  ;
-    private static final int   MAX_PENDING_PING_TESTS             = 5   ;
-    private static final int   GOOD_RTT_THRESHOLD                 = 99  ;
-    private static final float GOOD_PACKET_LOSS_PERCENT_THRESHOLD = 5.0f;
+    private static final int   MAX_PENDING_PING_TESTS             = 20  ;
+    private static final int   GOOD_RTT_THRESHOLD                 = 90  ;
+    private static final float GOOD_PACKET_LOSS_PERCENT_THRESHOLD = 2.5f;
 
     private final Object lock = new Object();
 
@@ -42,13 +41,13 @@ public class VirtualConnection {
     private final Deque<PingTest> pendingPingTests = new ArrayDeque<>();
 
     @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
-    private final List<UnwrappedPacketData> receiveQueue = new ArrayList<>();
+    private final Deque<UnwrappedPacketData> receiveQueue = new ArrayDeque<>();
 
     @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
-    private final List<Message> sendQueue = new ArrayList<>();
+    private final Deque<Message> sendQueue = new ArrayDeque<>();
 
     @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
-    private final List<Boolean> ensureDeliveredStatuses = new ArrayList<>();
+    private final Deque<Boolean> ensureDeliveredStatuses = new ArrayDeque<>();
 
     private volatile boolean authorized;
 
@@ -126,8 +125,8 @@ public class VirtualConnection {
         synchronized (lock) {
             if (sendQueue.size() == MAX_SEND_QUEUE_SIZE) {
                 // Отменяем отправку самого "старого" пакета (их накопилось уж слишком много).
-                sendQueue.remove(0);
-                ensureDeliveredStatuses.remove(0);
+                sendQueue.pop();
+                ensureDeliveredStatuses.pop();
             }
 
             sendQueue.add(packet);
@@ -146,9 +145,12 @@ public class VirtualConnection {
     public void flushSendQueue() {
         synchronized (lock) {
             if (!sendQueue.isEmpty()) {
-                for (int i = 0; i < sendQueue.size(); i++) {
-                    Message packet = sendQueue.get(i);
-                    boolean ensureDelivered = ensureDeliveredStatuses.get(i);
+                Iterator<Message> packetsIt  = sendQueue.iterator();
+                Iterator<Boolean> statusesIt = ensureDeliveredStatuses.iterator();
+
+                while (packetsIt.hasNext()) {
+                    Message packet          = packetsIt .next();
+                    boolean ensureDelivered = statusesIt.next();
 
                     if (ensureDelivered)
                         sendImportantPacket(packet);

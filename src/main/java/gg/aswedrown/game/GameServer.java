@@ -1,6 +1,8 @@
 package gg.aswedrown.game;
 
+import gg.aswedrown.game.profiling.TpsMeter;
 import gg.aswedrown.server.AwdServer;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,9 @@ public class GameServer {
 
     private final AtomicLong currentTick  = new AtomicLong(0L);
     private final AtomicLong lastPingTick = new AtomicLong(0L);
+
+    @Getter
+    private final TpsMeter tpsMeter = new TpsMeter();
 
     private volatile boolean serverStopped;
 
@@ -43,7 +48,11 @@ public class GameServer {
 
     private void serverStopped() {
         log.info("Stopping game server.");
-        activeGameLobbies.forEach(ActiveGameLobby::endGame);
+
+        synchronized (activeGameLobbiesLock) {
+            activeGameLobbies.forEach(ActiveGameLobby::endGame);
+            activeGameLobbies.clear();
+        }
     }
 
     public void stop() {
@@ -62,6 +71,7 @@ public class GameServer {
     @SuppressWarnings ("JavadocReference")
     private void update() {
         currentTick.incrementAndGet();
+        tpsMeter.onUpdate();
 
         srv.getVirConManager().flushAllReceiveQueues(); // обрабатываем пакеты, полученные от игроков
         updateVirtualConnections();                     // выполняем обновление (и, м.б., ставим на отправку пакеты)
@@ -80,6 +90,41 @@ public class GameServer {
             // Пингуем клиентов, НЕ находящихся в игре.
             srv.getVirConManager().pingThose(virCon -> virCon.getGameLobby() == null);
             lastPingTick.set(curr);
+        }
+    }
+
+    public int getActiveGameLobbies() {
+        synchronized (activeGameLobbiesLock) {
+            return activeGameLobbies.size();
+        }
+    }
+
+    public float getAverageGameLobbiesTps() {
+        synchronized (activeGameLobbiesLock) {
+            boolean approx = false;
+            float sum = 0.0f;
+
+            for (ActiveGameLobby lobby : activeGameLobbies) {
+                float lobbyTps = lobby.getTpsMeter().estimateTps();
+
+                if (lobbyTps < 0.0f) {
+                    // В одной из комнат в данный момент TPS может быть вычислен лишь.
+                    // приближённо. Тогда и весь результат отображаем как приближённый.
+                    sum -= lobbyTps;
+                    approx = true;
+                } else
+                    sum += lobbyTps;
+            }
+
+            float avg = sum / activeGameLobbies.size();
+
+            return approx ? -avg : avg;
+        }
+    }
+
+    public int getTotalPlayersPlaying() {
+        synchronized (activeGameLobbiesLock) {
+            return activeGameLobbies.stream().mapToInt(ActiveGameLobby::getPlayers).sum();
         }
     }
 
