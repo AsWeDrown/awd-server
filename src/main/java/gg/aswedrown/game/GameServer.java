@@ -61,7 +61,9 @@ public class GameServer {
         log.info("Stopping game server.");
 
         synchronized (activeGameLobbiesLock) {
-            activeGameLobbies.forEach(ActiveGameLobby::endGame);
+            // Создаём копию для итерации, т.к. endGame внутри удаляет этот объект из списка (concurrent mod).
+            Collection<ActiveGameLobby> copy = new ArrayList<>(activeGameLobbies);
+            copy.forEach(ActiveGameLobby::endGame);
             activeGameLobbies.clear();
         }
     }

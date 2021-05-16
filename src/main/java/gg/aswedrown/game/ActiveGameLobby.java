@@ -30,6 +30,7 @@ public class ActiveGameLobby {
 
     private final Map<Integer, World> dimensions = new HashMap<>();
 
+    private volatile boolean gameBegun;
     private volatile boolean gameStopped;
 
     private final AtomicLong currentTick  = new AtomicLong(0L);
@@ -107,6 +108,12 @@ public class ActiveGameLobby {
      * после получения пакета JoinWorldComplete от всех игроков в комнате.
      */
     private void beginGame() {
+        if (gameBegun) {
+            log.warn("beginGame() called twice");
+            return;
+        }
+
+        gameBegun = true;
         log.info("The game in lobby {} has begun ({} players).", lobbyId, players.size());
 
         // Уведомляем всех игроков о спавне.. всех игроков.

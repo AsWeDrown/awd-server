@@ -98,8 +98,6 @@ public class VirtualConnection {
                 lastPongDateTime = currTime;
                 pendingPingTests.remove(pongedTest);
                 lastRtt = (int) (currTime - pongedTest.getSentTime());
-
-                System.out.println("** TEMP DEBUG ** " + addr.getHostAddress() + "'s RTT = " + lastRtt + " millis");
             }
         }
     }

@@ -189,6 +189,8 @@ public class NetworkHandle {
         // Однако подтверждения о доставке этого пакета мы так и не получили. Скорее
         // всего, пакет был потерян где-то "по дороге" (хотя и не обязательно - могло
         // случиться и такое, что это просто до нас не дошла информация о его получении).
+//        System.out.println("** TEMP DEBUG ** Packet possibly lost: #" + pContainer.getOriginalSequence());
+
         if (pContainer.shouldEnsureDelivered())
             // Этот пакет обязательно нужно доставить. Пробуем снова.
             // При этом конструируем новый пакет - лишь оставляя оригинальное содержимое (сообщение).
@@ -196,9 +198,6 @@ public class NetworkHandle {
 
         // Учитываем потерю пакета в статистике.
         updateDeliveryStat(false);
-
-//        System.out.println("** TEMP DEBUG ** Packet possibly lost: #" + pContainer.getOriginalSequence()
-//                + " | new packet loss: " + packetLossPercent + "%");
     }
 
     /* Этот метод НЕ гарантирует потокобезопасность. Его вызов должен быть обёрнут в блокирующий блок. */
@@ -248,7 +247,9 @@ public class NetworkHandle {
     public boolean sendPacket(boolean ensureDelivered, @NonNull Message packet) {
         synchronized (lock) {
             try {
-                long begin = System.currentTimeMillis();
+//                System.out.println("** TEMP DEBUG ** Sending packet #" + localSequenceNumber + " of type "
+//                        + packet.getClass().getSimpleName() + " to " + addr.getHostAddress()
+//                        + " (ensure delivered - " + ensureDelivered + ")");
 
                 // Конструируем пакет.
                 byte[] data = PacketTransformer.wrap(packet,
@@ -263,15 +264,11 @@ public class NetworkHandle {
 //                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
 //                        + " to CONSTRUCT a " + packet.getClass().getSimpleName() + " packet");
 
-                begin = System.currentTimeMillis();
-
                 // Отправляем пакет по UDP.
                 udpServer.sendRaw(addr, data);
 
 //                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
 //                        + " to SEND a " + packet.getClass().getSimpleName() + " packet");
-
-                begin = System.currentTimeMillis();
 
                 // "Протоколообразующие" манипуляции.
                 packetSent(new PacketContainer(

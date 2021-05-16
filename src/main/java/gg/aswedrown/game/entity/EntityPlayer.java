@@ -61,13 +61,13 @@ public class EntityPlayer extends LivingEntity {
     }
 
     public void updatePlayerInputs(long inputsBitfield) {
-        playerInputs.movingLeft  = (inputsBitfield & PlayerInputs.BIT_MOVING_LEFT)  != 0;
+        playerInputs.movingLeft  = (inputsBitfield & PlayerInputs.BIT_MOVING_LEFT ) != 0;
         playerInputs.movingRight = (inputsBitfield & PlayerInputs.BIT_MOVING_RIGHT) != 0;
     }
 
     private static final class PlayerInputs {
-        private static final long BIT_MOVING_LEFT  = 1,
-                                  BIT_MOVING_RIGHT = 2;
+        private static final long BIT_MOVING_LEFT  = 1, // 2^0
+                                  BIT_MOVING_RIGHT = 2; // 2^1
 
         private boolean movingLeft,
                         movingRight;
