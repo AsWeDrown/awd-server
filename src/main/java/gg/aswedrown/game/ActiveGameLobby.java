@@ -116,7 +116,13 @@ public class ActiveGameLobby {
         // Запускаем игровой цикл обновления в этой комнате.
         long tickPeriod = 1000L / srv.getConfig().getGameTps();
 
-        new Timer().schedule(new TimerTask() {
+        // ВАЖНО использовать здесь именно scheduleAtFixedRate, чтобы сервер "изо всех сил"
+        // старался придерживаться указанного значения TPS. При обычном schedule сервер будет
+        // тикать ЗНАЧИТЕЛЬНО реже (например, ~21 раз в секунду вместо указанных 25), что в
+        // случае игровых обновлений совершенно недопустимо. У scheduleAtFixedRate есть свой
+        // недостаток: иногда фактический TPS выходит немного выше запрошенного (например,
+        // 25.005 раз вместо 25 ровно) - но это несущественно, и с этим точно можно жить.
+        new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 if (gameStopped)

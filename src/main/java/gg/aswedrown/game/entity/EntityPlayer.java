@@ -39,17 +39,17 @@ public class EntityPlayer extends LivingEntity {
 
         // TODO: 15.05.2021 remove
         posX = 65.0f;
-        posY = 35.0f;
+        posY = 40.0f;
         // TODO: 15.05.2021 remove
     }
 
     @Override
     public void update() {
         if (playerInputs.movingLeft)
-            posX -= 0.1f;
+            posX -= 0.095f;
 
         if (playerInputs.movingRight)
-            posX += 0.1f;
+            posX += 0.095f;
     }
 
     @Override

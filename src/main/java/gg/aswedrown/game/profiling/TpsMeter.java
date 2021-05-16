@@ -60,6 +60,10 @@ public class TpsMeter {
     public void onUpdate() {
         long thisTickNanoTime = System.nanoTime();
 
+        if (lastTickNanoTime == 0)
+            // Лениво инициализируем (чтобы не было "гигантских" значений задержки).
+            lastTickNanoTime = thisTickNanoTime;
+
         synchronized (lock) {
             if (recentTickDelays.size() == samplesNum)
                 recentTickDelays.pop(); // удаляем самый "старый" экземпляр данных

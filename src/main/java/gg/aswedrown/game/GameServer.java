@@ -7,7 +7,10 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -30,10 +33,18 @@ public class GameServer {
     private volatile boolean serverStopped;
 
     public void startGameLoopInNewThread() {
+        // Запускаем основной сервер (ядро). Используется по сути только для соединений, не связанных с
+        // игроками (т.е. для связи с ещё не начавшими игру клиентами, например, на этапах AUTH и LOBBY).
         long tickPeriod = 1000L / srv.getConfig().getGameTps();
         log.info("Starting game server at {} TPS.", srv.getConfig().getGameTps());
 
-        new Timer().schedule(new TimerTask() {
+        // ВАЖНО использовать здесь именно scheduleAtFixedRate, чтобы сервер "изо всех сил"
+        // старался придерживаться указанного значения TPS. При обычном schedule сервер будет
+        // тикать ЗНАЧИТЕЛЬНО реже (например, ~21 раз в секунду вместо указанных 25), что в
+        // случае игровых обновлений совершенно недопустимо. У scheduleAtFixedRate есть свой
+        // недостаток: иногда фактический TPS выходит немного выше запрошенного (например,
+        // 25.005 раз вместо 25 ровно) - но это несущественно, и с этим точно можно жить.
+        new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 if (serverStopped)

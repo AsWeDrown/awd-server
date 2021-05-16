@@ -163,19 +163,24 @@ public final class AwdServer {
 
     private void setupShutdownHook() {
         Runtime.getRuntime().addShutdownHook(
-                new Thread(this::shutdown, "AwdServer-Shutdown-Hook"));
+                new Thread(() -> shutdown(true), "AwdServer-Shutdown-Hook"));
     }
 
-    private void shutdown() {
+    public void shutdown() {
+        shutdown(false);
+    }
+
+    private void shutdown(boolean isShutdownHook) {
         log.info("Shutting down...");
 
         gameServer.stop();
         udpServer.stop();
         db.close();
 
-        log.info("Bye!");
-
-        System.exit(0);
+        if (!isShutdownHook) {
+            log.info("Bye!");
+            System.exit(0);
+        }
     }
 
     private void startUdpSocketServer() throws SocketException {

@@ -16,7 +16,7 @@ public class ConsoleCommandStop extends ConsoleCommand {
 
     @Override
     protected void execute(String[] args) throws Exception {
-        System.exit(0); // shutdownHook сделает всю нужную работу
+        srv.shutdown();
     }
 
 }
