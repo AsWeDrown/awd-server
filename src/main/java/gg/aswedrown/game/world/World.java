@@ -1,5 +1,6 @@
 package gg.aswedrown.game.world;
 
+import gg.aswedrown.game.FatalGameException;
 import gg.aswedrown.game.entity.Entity;
 import lombok.Getter;
 import lombok.NonNull;
@@ -26,6 +27,26 @@ public class World {
     private final Collection<Entity> entities = new ArrayList<>();
 
     private final AtomicInteger lastEntityId = new AtomicInteger(0);
+
+    @Getter
+    private WorldData worldData;
+
+    private volatile boolean loaded;
+
+    public void load() throws FatalGameException {
+        if (loaded) {
+            log.warn("World load() called twice");
+            return;
+        }
+
+        loaded = true;
+
+        WorldLoader worldLoader = new WorldLoader(dimension);
+        worldData = worldLoader.loadWorld();
+
+        if (worldLoader.getLoadStatus() != WorldLoader.WorldLoadStatus.LOADED)
+            throw new FatalGameException("failed to load world (dimension " + dimension + ")");
+    }
 
     public void update() {
         synchronized (lock) {

@@ -1,6 +1,7 @@
 package gg.aswedrown.server.data.lobby;
 
 import gg.aswedrown.game.ActiveGameLobby;
+import gg.aswedrown.game.FatalGameException;
 import gg.aswedrown.game.GameState;
 import gg.aswedrown.game.entity.EntityPlayer;
 import gg.aswedrown.game.world.World;
@@ -310,7 +311,8 @@ public class LobbyManager {
         }
     }
 
-    private void newGame(int lobbyId, int hostPlayerId, @NonNull Map<Integer, String> membersNames) {
+    private void newGame(int lobbyId, int hostPlayerId,
+                         @NonNull Map<Integer, String> membersNames) throws FatalGameException {
         // Создаём сущности игроков.
         Collection<EntityPlayer> players = new ArrayList<>();
         Map<Integer, Integer> membersCharacters
@@ -335,6 +337,10 @@ public class LobbyManager {
         // Регистрируем комнату как "готовую к началу игры" (в стадии "подготовки" к игре).
         ActiveGameLobby lobby = new ActiveGameLobby(srv, lobbyId, hostPlayerId, players);
         World world = new World(lobbyId, Worlds.DIM_SUBMARINE_BEGIN);
+
+        // Загружаем мир. Может выбросить FatalGameException - тогда
+        // сервер откажет в запуске игры с кодом ошибки INTERNAL_ERROR.
+        world.load();
 
         for (EntityPlayer player : players) {
             world.addEntity(player);
