@@ -108,4 +108,15 @@ public class NetworkService {
         );
     }
 
+    public static void updateEntityPosition(@NonNull VirtualConnection virCon,
+                                            int entityId, float posX, float posY, float faceAngle) {
+        virCon.enqueueSend(UpdateEntityPosition.newBuilder()
+                .setEntityId(entityId)
+                .setPosX(posX)
+                .setPosY(posY)
+                .setFaceAngle(faceAngle)
+                .build()
+        );
+    }
+
 }

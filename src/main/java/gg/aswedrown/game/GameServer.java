@@ -16,41 +16,70 @@ public class GameServer {
 
     private final AwdServer srv;
 
-    private final AtomicLong currentTick = new AtomicLong(0L);
-
     private final Collection<ActiveGameLobby> activeGameLobbies = new ArrayList<>();
     private final Object activeGameLobbiesLock = new Object();
 
+    private final AtomicLong currentTick  = new AtomicLong(0L);
+    private final AtomicLong lastPingTick = new AtomicLong(0L);
+
+    private volatile boolean serverStopped;
+
     public void startGameLoopInNewThread() {
         long tickPeriod = 1000L / srv.getConfig().getGameTps();
-        log.info("Starting game loop at {} TPS.", srv.getConfig().getGameTps());
+        log.info("Starting game server at {} TPS.", srv.getConfig().getGameTps());
 
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                runGameLoop();
+                if (serverStopped)
+                    // Не делаем return, чтобы успеть совершить последнее обновление,
+                    // чтобы разослать игрокам все необходимые пакеты (о завершении).
+                    cancel();
+
+                update();
             }
         }, START_DELAY_MILLIS, tickPeriod);
     }
 
-    private void runGameLoop() {
+    private void serverStopped() {
+        log.info("Stopping game server.");
+        activeGameLobbies.forEach(ActiveGameLobby::endGame);
+    }
+
+    public void stop() {
+        if (!serverStopped) {
+            serverStopped = true;
+            serverStopped();
+        }
+    }
+
+    /**
+     * Этот update() ПОЛНОСТЬЮ заменяет ActiveGameLobby#update() для
+     * виртуальных соединений игроков, НЕ находящихся в игре (AUTH/LOBBY/... (но НЕ PLAY)).
+     *
+     * @see ActiveGameLobby#update()
+     */
+    @SuppressWarnings ("JavadocReference")
+    private void update() {
         currentTick.incrementAndGet();
 
         srv.getVirConManager().flushAllReceiveQueues(); // обрабатываем пакеты, полученные от игроков
-        update();                                       // выполняем обновление (и, м.б., ставим на отправку пакеты)
+        updateVirtualConnections();                     // выполняем обновление (и, м.б., ставим на отправку пакеты)
         srv.getVirConManager().flushAllSendQueues();    // отправляем пакеты, поставленые в очередь после обновления
     }
 
-    private void update() {
-        synchronized (activeGameLobbiesLock) {
-            activeGameLobbies.stream().filter(ActiveGameLobby::isGameBegun).forEach(lobby -> {
-                try {
-                    lobby.update();
-                } catch (Exception ex) {
-                    log.error("Unhandled exception during game state update in lobby {}:",
-                            lobby.getLobbyId(), ex);
-                }
-            });
+    private void updateVirtualConnections() {
+        sendPings(); // для поддержания соединения с клиентами
+    }
+
+    private void sendPings() {
+        long curr = currentTick .get();
+        long last = lastPingTick.get();
+
+        if ((curr - last) > srv.getConfig().getNonplayPingPeriodTicks()) {
+            // Пингуем клиентов, НЕ находящихся в игре.
+            srv.getVirConManager().pingThose(virCon -> virCon.getGameLobby() == null);
+            lastPingTick.set(curr);
         }
     }
 

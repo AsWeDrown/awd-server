@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -36,6 +37,12 @@ public class World {
                             entity.getEntityId(), lobbyId, dimension, ex);
                 }
             });
+        }
+    }
+
+    public void forEachEntity(@NonNull Consumer<? super Entity> consumer) {
+        synchronized (lock) {
+            entities.forEach(consumer);
         }
     }
 

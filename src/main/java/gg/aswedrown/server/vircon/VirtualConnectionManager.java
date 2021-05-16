@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -102,8 +103,11 @@ public class VirtualConnectionManager {
         virConMap.values().forEach(VirtualConnection::flushSendQueue);
     }
 
-    void pingAll() {
-        virConMap.values().forEach(VirtualConnection::ping);
+    /**
+     * Пингует клиентов из списка подключённых, удовлетворяющих указанному условию.
+     */
+    public void pingThose(@NonNull Predicate<? super VirtualConnection> pred) {
+        virConMap.values().stream().filter(pred).forEach(VirtualConnection::ping);
     }
 
     private void closeIdleVirtualConnections() {

@@ -241,6 +241,11 @@ public class LobbyManager {
             virCon.setCurrentLocalPlayerId(0);
             virCon.setCurrentCharacter(0);
 
+            if (virCon.getGameLobby() != null) {
+                virCon.getGameLobby().playerLeftWorld(targetPlayerId);
+                virCon.setGameLobby(null);
+            }
+
             if (targetPlayerId == repo.getHost(lobbyId))
                 // Удаляем комнату при выходе её хоста.
                 deleteLobby(lobbyId);
@@ -292,7 +297,7 @@ public class LobbyManager {
 
             if (saveId.equals("0")) {
                 // Новая игра.
-                newGame(lobbyId, membersNames);
+                newGame(lobbyId, playerId, membersNames);
                 return BeginPlayStateResult.SUCCESS;
             } else {
                 // Загрузка игры из сохранения.
@@ -305,7 +310,7 @@ public class LobbyManager {
         }
     }
 
-    private void newGame(int lobbyId, @NonNull Map<Integer, String> membersNames) {
+    private void newGame(int lobbyId, int hostPlayerId, @NonNull Map<Integer, String> membersNames) {
         // Создаём сущности игроков.
         Collection<EntityPlayer> players = new ArrayList<>();
         Map<Integer, Integer> membersCharacters
@@ -328,13 +333,18 @@ public class LobbyManager {
         }
 
         // Регистрируем комнату как "готовую к началу игры" (в стадии "подготовки" к игре).
-        ActiveGameLobby lobby = new ActiveGameLobby(lobbyId, players);
+        ActiveGameLobby lobby = new ActiveGameLobby(srv, lobbyId, hostPlayerId, players);
         World world = new World(lobbyId, Worlds.DIM_SUBMARINE_BEGIN);
-        players.forEach(world::addEntity);
-        lobby.setWorld(world.getDimension(), world);
 
+        for (EntityPlayer player : players) {
+            world.addEntity(player);
+            player.getVirCon().setGameLobby(lobby);
+        }
+
+        lobby.setWorld(world.getDimension(), world);
         repo.setGameState(lobbyId, GameState.PLAY_STATE);
         srv.getGameServer().registerActiveGameLobby(lobby);
+
         log.info("Beginning play state in lobby {} ({} players).", lobbyId, players.size());
 
         // Ждём 3 секунды (чтобы наш ответ, BeginPlayStateResponse, точно успел дойти до хоста комнаты),
@@ -349,33 +359,21 @@ public class LobbyManager {
     }
 
     public void updateDimensionComplete(@NonNull VirtualConnection virCon) {
-        if (virCon.isAuthorized() && virCon.getCurrentlyJoinedLobbyId() != 0) {
-            ActiveGameLobby lobby = srv.getGameServer()
-                    .getActiveGameLobby(virCon.getCurrentlyJoinedLobbyId());
-
-            if (lobby != null)
-                lobby.playerLoadedWorld(virCon.getCurrentLocalPlayerId());
-        }
+        if (virCon.isAuthorized() && virCon.getGameLobby() != null)
+            virCon.getGameLobby().playerLoadedWorld(
+                    virCon.getCurrentLocalPlayerId());
     }
 
     public void joinWorldComplete(@NonNull VirtualConnection virCon) {
-        if (virCon.isAuthorized() && virCon.getCurrentlyJoinedLobbyId() != 0) {
-            ActiveGameLobby lobby = srv.getGameServer()
-                    .getActiveGameLobby(virCon.getCurrentlyJoinedLobbyId());
-
-            if (lobby != null)
-                lobby.playerJoinedWorld(virCon.getCurrentLocalPlayerId());
-        }
+        if (virCon.isAuthorized() && virCon.getGameLobby() != null)
+            virCon.getGameLobby().playerJoinedWorld(
+                    virCon.getCurrentLocalPlayerId());
     }
 
     public void updatePlayerInputs(@NonNull VirtualConnection virCon, long inputsBitfield) {
-        if (virCon.isAuthorized() && virCon.getCurrentlyJoinedLobbyId() != 0) {
-            ActiveGameLobby lobby = srv.getGameServer()
-                    .getActiveGameLobby(virCon.getCurrentlyJoinedLobbyId());
-
-            if (lobby != null)
-                lobby.updatePlayerInputs(virCon.getCurrentLocalPlayerId(), inputsBitfield);
-        }
+        if (virCon.isAuthorized() && virCon.getGameLobby() != null)
+            virCon.getGameLobby().updatePlayerInputs(
+                    virCon.getCurrentLocalPlayerId(), inputsBitfield);
     }
 
     private int generateNewLobbyId() {

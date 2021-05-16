@@ -8,7 +8,6 @@ import gg.aswedrown.server.data.lobby.LobbyManager;
 import gg.aswedrown.server.data.lobby.MongoLobbyRepository;
 import gg.aswedrown.server.udp.AwdUdpServer;
 import gg.aswedrown.server.udp.UdpServer;
-import gg.aswedrown.server.vircon.Pinger;
 import gg.aswedrown.server.vircon.VirtualConnectionManager;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.StandardCopyOption;
-import java.util.Timer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -59,9 +57,6 @@ public final class AwdServer {
     private PacketManager packetManager;
 
     @Getter
-    private Pinger pinger;
-
-    @Getter
     private GameServer gameServer;
 
     @Getter
@@ -73,8 +68,10 @@ public final class AwdServer {
 
         startupBeginTime = System.currentTimeMillis();
 
+        // Загружаем конфиг из файла (или генерируем и используем дефолтный, если файл отсутствует).
         loadConfig();
 
+        // Настраиваем основные компоненты, необходимые для работы сервера.
         setupShutdownHook();
         setupExecutor();
         setupVirtualConnectivity(); // используется в БД, так что должно делаться до setupDatabase
@@ -85,7 +82,7 @@ public final class AwdServer {
         double startupTookSeconds = (System.currentTimeMillis() - startupBeginTime) / 1000.0D;
         log.info("Startup done! Everything took {} s.", String.format("%.2f", startupTookSeconds));
 
-        // Запускаем в основном потоке в последнюю очередь. Тут ждать уже нечего.
+        // Запускаем в основном (в этом) потоке в последнюю очередь. Тут ждать уже нечего.
         startUdpSocketServer();
     }
 
@@ -166,25 +163,24 @@ public final class AwdServer {
 
     private void setupShutdownHook() {
         Runtime.getRuntime().addShutdownHook(
-                new Thread(this::onShutdown, "AwdServer-Shutdown-Hook"));
+                new Thread(this::shutdown, "AwdServer-Shutdown-Hook"));
     }
 
-    private void onShutdown() {
+    private void shutdown() {
         log.info("Shutting down...");
 
-        db.close();
+        gameServer.stop();
         udpServer.stop();
+        db.close();
 
         log.info("Bye!");
+
+        System.exit(0);
     }
 
     private void startUdpSocketServer() throws SocketException {
         // Менеджер и обработчики пакетов.
         packetManager = new PacketManager(this);
-
-        // Пингер (нет, блин, Понгер).
-        new Timer().schedule(pinger = new Pinger(this),
-                config.getPingPeriodMillis(), config.getPingPeriodMillis());
 
         // Сам UDP "сервер".
         udpServer = new AwdUdpServer(

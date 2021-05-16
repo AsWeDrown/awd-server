@@ -1,6 +1,7 @@
 package gg.aswedrown.server.vircon;
 
 import com.google.protobuf.Message;
+import gg.aswedrown.game.ActiveGameLobby;
 import gg.aswedrown.net.NetworkHandle;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.net.UnwrappedPacketData;
@@ -58,6 +59,8 @@ public class VirtualConnection {
                          lastRtt;
 
     private volatile long lastPongDateTime = System.currentTimeMillis();
+
+    private ActiveGameLobby gameLobby;
 
     VirtualConnection(@NonNull AwdServer srv, @NonNull InetAddress addr) {
         this.srv = srv;

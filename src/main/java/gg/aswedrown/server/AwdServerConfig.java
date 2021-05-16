@@ -32,7 +32,8 @@ public class AwdServerConfig {
 
             gameTps,
             maxLobbySize,
-            pingPeriodMillis,
+            nonplayPingPeriodTicks,
+            playPingPeriodTicks,
             minPlayersToStart;
 
 }
