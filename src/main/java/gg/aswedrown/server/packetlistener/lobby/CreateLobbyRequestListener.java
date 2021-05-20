@@ -3,6 +3,7 @@ package gg.aswedrown.server.packetlistener.lobby;
 import gg.aswedrown.net.CreateLobbyRequest;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.net.PacketWrapper;
+import gg.aswedrown.net.UnwrappedPacketData;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.lobby.LobbyManager;
 import gg.aswedrown.server.packetlistener.PacketListener;
@@ -17,7 +18,8 @@ public class CreateLobbyRequestListener extends PacketListener<CreateLobbyReques
     }
 
     @Override
-    protected void processPacket(VirtualConnection virCon, CreateLobbyRequest packet) throws Exception {
+    protected void processPacket(VirtualConnection virCon, UnwrappedPacketData packetData,
+                                 CreateLobbyRequest packet) throws Exception {
         LobbyManager.CreationResult result = srv.getLobbyManager()
                 .createNewLobby(virCon, packet.getPlayerName());
 

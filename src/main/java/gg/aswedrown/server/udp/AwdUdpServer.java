@@ -1,7 +1,6 @@
 package gg.aswedrown.server.udp;
 
 import gg.aswedrown.net.PacketManager;
-import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.net.UnwrappedPacketData;
 import gg.aswedrown.server.vircon.VirtualConnection;
 import gg.aswedrown.server.vircon.VirtualConnectionManager;
@@ -53,6 +52,12 @@ public class AwdUdpServer implements UdpServer {
 
                 // Получаем IP-адрес отправителя пакета.
                 InetAddress senderAddr = packet.getAddress();
+                VirtualConnection virCon = virConManager.getVirtualConnection(senderAddr);
+
+                if (virCon == null)
+                    // Виртуальное соединение не было открыто (например, потому, что сервер переполнен).
+                    // В таком случае просто отклоняем полученный пакет.
+                    return;
 
                 // packet.getData() возвращает массив длиной buffer.length, который
                 // до нужной длины (длины буффера) дополнен хвостом из нулей. Они
@@ -61,22 +66,15 @@ public class AwdUdpServer implements UdpServer {
                 byte[] rawPacketData = Arrays.copyOf(buffer, packet.getLength());
 
                 if (rawPacketData.length > 0) {
-                    VirtualConnection virCon = virConManager.getVirtualConnection(senderAddr);
-
-                    if (virCon == null)
-                        // Виртуальное соединение не было открыто (например, потому, что сервер переполнен).
-                        // В таком случае просто отклоняем полученный пакет.
-                        return;
-
                     packetRecvExecService.execute(() -> {
                         UnwrappedPacketData packetData = virCon.receivePacket(rawPacketData);
 
                         if (packetData != null) {
-                            if (packetData.getPacketType() == PacketWrapper.PacketCase.PONG)
+                            //if (packetData.getPacketType() == PacketWrapper.PacketCase.PONG)
                                 // Для пакетов Ping/Pong используем мгновенные отправку/получение.
                                 packetManager.processReceivedPacket(virCon, packetData);
-                            else
-                                virCon.enqueueReceive(packetData);
+                            //else
+                            //    virCon.enqueueReceive(packetData);
                         }
                     });
                 } else

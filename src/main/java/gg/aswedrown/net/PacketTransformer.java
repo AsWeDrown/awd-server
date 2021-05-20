@@ -271,12 +271,12 @@ public final class PacketTransformer {
                         .build()
                         .toByteArray();
 
-            case UPDATE_PLAYER_INPUTS:
+            case PLAYER_ACTIONS:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
                         .setAck(ack)
                         .setAckBitfield(ackBitfield)
-                        .setUpdatePlayerInputs((UpdatePlayerInputs) packet)
+                        .setPlayerActions((PlayerActions) packet)
                         .build()
                         .toByteArray();
 
@@ -388,9 +388,9 @@ public final class PacketTransformer {
                 return new UnwrappedPacketData(
                         sequence, ack, ackBitfield, packetType, wrapper.getDespawnEntity());
 
-            case UPDATE_PLAYER_INPUTS:
+            case PLAYER_ACTIONS:
                 return new UnwrappedPacketData(
-                        sequence, ack, ackBitfield, packetType, wrapper.getUpdatePlayerInputs());
+                        sequence, ack, ackBitfield, packetType, wrapper.getPlayerActions());
 
             case UPDATE_ENTITY_POSITION:
                 return new UnwrappedPacketData(

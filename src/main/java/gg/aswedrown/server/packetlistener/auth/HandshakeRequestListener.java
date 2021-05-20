@@ -1,9 +1,6 @@
 package gg.aswedrown.server.packetlistener.auth;
 
-import gg.aswedrown.net.HandshakeRequest;
-import gg.aswedrown.net.NetworkService;
-import gg.aswedrown.net.PacketManager;
-import gg.aswedrown.net.PacketWrapper;
+import gg.aswedrown.net.*;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.packetlistener.PacketListener;
 import gg.aswedrown.server.packetlistener.RegisterPacketListener;
@@ -19,7 +16,8 @@ public class HandshakeRequestListener extends PacketListener<HandshakeRequest> {
     }
 
     @Override
-    protected void processPacket(VirtualConnection virCon, HandshakeRequest packet) throws Exception {
+    protected void processPacket(VirtualConnection virCon, UnwrappedPacketData packetData,
+                                 HandshakeRequest packet) throws Exception {
         log.info("Protocol version of {} is {}.",
                 virCon.getAddr().getHostAddress(), packet.getProtocolVersion());
 

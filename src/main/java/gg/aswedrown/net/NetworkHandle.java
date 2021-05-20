@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Getter @Setter
@@ -65,11 +66,12 @@ public class NetworkHandle {
     /**
      * "Протоколообразующие" поля.
      */
-    private int localSequenceNumber, // новер самого "нового" отправленного пакета
-                remoteSequenceNumber; // номер самого "нового" полученного пакета
+    private final AtomicInteger
+            localSequenceNumber  = new AtomicInteger(0), // новер самого "нового" отправленного пакета
+            remoteSequenceNumber = new AtomicInteger(0); // номер самого "нового" полученного пакета
 
     /* Этот метод НЕ гарантирует потокобезопасность. Его вызов должен быть обёрнут в блокирующий блок. */
-    private long calculateAckBitfield() {
+    private long calculateAckBitfield(int remoteSeqNum) {
         long ackBitfield = 0;
 
         // Идём от 1, т.к. иначе мы включим в ack bitfield ещё и пакет с номером remote sequence
@@ -77,13 +79,10 @@ public class NetworkHandle {
         // напрямую, когда сами будем отправлять ему свой следующий пакет.
         for (int bitNum = 1; bitNum < PACKETS_QUEUE_SIZE; bitNum++)
             if (receivedQueue.contains(SequenceNumberMath
-                    .subtract(remoteSequenceNumber, bitNum))) // в порядке уменьшения номера
+                    .subtract(remoteSeqNum, bitNum))) // в порядке уменьшения номера
                 // "Оповещение" о том, что мы успешно получили пакет с этим
                 // sequence number (устанавливаем бит с соотв. номером на единицу).
                 ackBitfield |= 1L << (bitNum - 1); // т.к. идём с единицы, не забываем отнимать эту единицу здесь
-
-//        System.out.println("** TEMP DEBUG ** Calculated ack bitfield: "
-//                + Long.toString(ackBitfield, 2));
 
         return ackBitfield;
     }
@@ -95,19 +94,15 @@ public class NetworkHandle {
             // в список недавно полученных (для дальнейшего "оповещения" о получении).
             int sequence = data.getSequence();
 
-            if (SequenceNumberMath.isMoreRecent(sequence, remoteSequenceNumber))
+            if (SequenceNumberMath.isMoreRecent(sequence, remoteSequenceNumber.get()))
                 // Полученный только что пакет оказался "новее" пакета,
                 // sequence number которого у нас сейчас сохранён. Обновляем.
-                remoteSequenceNumber = sequence;
+                remoteSequenceNumber.set(sequence);
 
             // Смотрим, подтверждение получения каких пакетов другая сторона указала.
             int ack = data.getAck(); // sequence number последнего пакета, который другая сторона от нас получила
             long ackBitfield = data.getAckBitfield(); // сведения о получении 32 пакетов до пакета с номером ack
             int bitNum = 1; // начинаем с 1, т.к. 0 - это этот с номером ack; нас интересуют те, что были до него
-
-//            System.out.println("** TEMP DEBUG ** Packet received: #" + sequence
-//                    + " (current remote seq: #" + remoteSequenceNumber + "), ack: " + ack
-//                    + ", ack bitfield: " + Long.toString(ackBitfield, 2) + " ( = " + ackBitfield + " )");
 
             while (ackBitfield > 0) {
                 boolean bitSet = (ackBitfield & 1) == 1;
@@ -144,8 +139,10 @@ public class NetworkHandle {
     /* Этот метод НЕ гарантирует потокобезопасность. Его вызов должен быть обёрнут в блокирующий блок. */
     private void packetSent(PacketContainer pContainer) {
         // Обновляем локальный sequence number только после успешной отправки этого пакета.
-        localSequenceNumber = SequenceNumberMath.add(localSequenceNumber, 1); // поддержка wrap-around
-//        System.out.println("** TEMP DEBUG ** Packet sent, new local seq: #" + localSequenceNumber);
+        localSequenceNumber.set(SequenceNumberMath.add(localSequenceNumber.get(), 1));
+		
+        if (localSequenceNumber.get() == SequenceNumberMath.SEQUENCE_NUMBER_WRAP_AROUND_THRESHOLD)
+            localSequenceNumber.set(0); // wrap-around
 
         // Запоминаем этот пакет (но только в случае успешной отправки).
         // В случае потери пакета это поможет отправить его повторно, но
@@ -178,9 +175,6 @@ public class NetworkHandle {
 
         // Учитываем доставку пакета в статистике.
         updateDeliveryStat(true);
-
-//        System.out.println("** TEMP DEBUG ** Packet delivered: #" + sequence
-//                + " | new packet loss: " + packetLossPercent + "%");
     }
 
     /* Этот метод НЕ гарантирует потокобезопасность. Его вызов должен быть обёрнут в блокирующий блок. */
@@ -189,8 +183,6 @@ public class NetworkHandle {
         // Однако подтверждения о доставке этого пакета мы так и не получили. Скорее
         // всего, пакет был потерян где-то "по дороге" (хотя и не обязательно - могло
         // случиться и такое, что это просто до нас не дошла информация о его получении).
-//        System.out.println("** TEMP DEBUG ** Packet possibly lost: #" + pContainer.getOriginalSequence());
-
         if (pContainer.shouldEnsureDelivered())
             // Этот пакет обязательно нужно доставить. Пробуем снова.
             // При этом конструируем новый пакет - лишь оставляя оригинальное содержимое (сообщение).
@@ -212,24 +204,26 @@ public class NetworkHandle {
         packetLossPercent = 100.0f * (packetsSent - packetsDelivered) / packetsSent;
     }
 
+    public int getLocalSequenceNumber() {
+        synchronized (lock) {
+            return localSequenceNumber.get();
+        }
+    }
+
+    public int getRemoteSequenceNumber() {
+        synchronized (lock) {
+            return remoteSequenceNumber.get();
+        }
+    }
+
     public UnwrappedPacketData receivePacket(@NonNull byte[] packetData) {
         UnwrappedPacketData unwrappedPacketData;
 
         try {
-//            long begin = System.currentTimeMillis();
-
             unwrappedPacketData = PacketTransformer.unwrap(packetData);
 
-//            System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
-//                    + " to UNWRAP a " + packetData.length + "-bytes packet");
-
             if (unwrappedPacketData != null) {
-//                begin = System.currentTimeMillis();
                 packetReceived(unwrappedPacketData);
-//                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
-//                        + " to POST-PROCESS a RECEIVED " + packetData.length + "-bytes packet " +
-//                        "(" + unwrappedPacketData.getPacket().getClass().getSimpleName() + ")");
-
                 return unwrappedPacketData; // получили пакет успешно
             } else
                 // Protobuf смог десериализовать полученный пакет, но для него в listeners
@@ -244,38 +238,55 @@ public class NetworkHandle {
         return null; // ошибка получения
     }
 
+    /**
+     * Отправляет клиенту указанный пакет.
+     *
+     * Этот метод следует использовать в большинстве случаев - он автоматически
+     * вставляет в отправляемый пакет все необходимые (актуальные) поля, в том
+     * числе и номер последнего ПОЛУЧЕННОГО от клиента пакета.
+     *
+     * @see #sendPacket(boolean, Message, int) - если требуется подмена отправляемого 'ack'.
+     */
     public boolean sendPacket(boolean ensureDelivered, @NonNull Message packet) {
         synchronized (lock) {
+            return sendPacket(ensureDelivered, packet, remoteSequenceNumber.get());
+        }
+    }
+
+    /**
+     * Отправляет клиенту указанный пакет.
+     *
+     * Использовать этот метод следует только в случае, если нужно подменить
+     * номер (sequence number) последнего ПОЛУЧЕННОГО от клиента пакета. Это
+     * может понадобится, например, для указания номера последнего ОБРАБОТАННОГО
+     * (в последнем игровом тике/обновлении на сервере) пакета, т.к. в этом случае
+     * возможна рассинхронизация (получение и обработка пакетов не всегда происходят
+     * в одном потоке, и не всегда мгновенно).
+     *
+     * ВАЖНО: в случае потери пакета, если ensureDelivered==true, установленное поле
+     * ack будет сброшено, и вместо него будет автоматически вычислено новое (актуальное
+     * на момент обнаружения потери пакета).
+     *
+     * @see #sendPacket(boolean, Message) - если подмены отправляемого 'ack' не требуется.
+     */
+    public boolean sendPacket(boolean ensureDelivered, @NonNull Message packet, int ack) {
+        synchronized (lock) {
             try {
-//                System.out.println("** TEMP DEBUG ** Sending packet #" + localSequenceNumber + " of type "
-//                        + packet.getClass().getSimpleName() + " to " + addr.getHostAddress()
-//                        + " (ensure delivered - " + ensureDelivered + ")");
-
                 // Конструируем пакет.
-                byte[] data = PacketTransformer.wrap(packet,
-                        localSequenceNumber,
-                        remoteSequenceNumber,
-                        calculateAckBitfield()
-                );
+                int localSeqNum = localSequenceNumber.get();
 
-//                System.out.println("** TEMP DEBUG ** Sending packet #" + localSequenceNumber
-//                        + ", acking #" + remoteSequenceNumber);
-//
-//                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
-//                        + " to CONSTRUCT a " + packet.getClass().getSimpleName() + " packet");
+                byte[] data = PacketTransformer.wrap(packet,
+                        localSeqNum,
+                        ack,
+                        calculateAckBitfield(ack)
+                );
 
                 // Отправляем пакет по UDP.
                 udpServer.sendRaw(addr, data);
 
-//                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
-//                        + " to SEND a " + packet.getClass().getSimpleName() + " packet");
-
                 // "Протоколообразующие" манипуляции.
                 packetSent(new PacketContainer(
-                        ensureDelivered, localSequenceNumber, packet)); // "протоколообразующие" манипуляции
-
-//                System.out.println("** TEMP DEBUG ** Took " + (System.currentTimeMillis() - begin)
-//                        + " to POST-PROCESS a " + packet.getClass().getSimpleName() + " packet");
+                        ensureDelivered, localSeqNum, packet)); // "протоколообразующие" манипуляции
 
                 return true; // пакет отправлен успешно
             } catch (IOException ex) {

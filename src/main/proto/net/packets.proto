@@ -147,8 +147,8 @@ message DespawnEntity { // C <-- S
   uint32 entity_id = 1;
 }
 
-message UpdatePlayerInputs { // C --> S
-  uint64 inputs_bitfield = 1; // на самом деле используется uint32, но 64 нужно для нормальной работы в Java ("long")
+message PlayerActions { // C --> S
+  uint64 actions_bitfield = 1; // на самом деле используется uint32, но 64 нужно для нормальной работы в Java ("long")
 }
 
 message UpdateEntityPosition { // C <-- S
@@ -222,7 +222,7 @@ message PacketWrapper {
     JoinWorldComplete join_world_complete             = 1003;
     SpawnEntity spawn_entity                          = 2000;
     DespawnEntity despawn_entity                      = 2001;
-    UpdatePlayerInputs update_player_inputs           = 3000;
+    PlayerActions player_actions                      = 3000;
     UpdateEntityPosition update_entity_position       = 3001;
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

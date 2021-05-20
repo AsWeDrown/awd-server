@@ -2,6 +2,7 @@ package gg.aswedrown.server.packetlistener.auth;
 
 import gg.aswedrown.net.PacketWrapper;
 import gg.aswedrown.net.Pong;
+import gg.aswedrown.net.UnwrappedPacketData;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.packetlistener.PacketListener;
 import gg.aswedrown.server.packetlistener.RegisterPacketListener;
@@ -15,7 +16,8 @@ public class PongListener extends PacketListener<Pong> {
     }
 
     @Override
-    protected void processPacket(VirtualConnection virCon, Pong packet) throws Exception {
+    protected void processPacket(VirtualConnection virCon, UnwrappedPacketData packetData,
+                                 Pong packet) throws Exception {
         virCon.pongReceived(packet.getTestId());
     }
 

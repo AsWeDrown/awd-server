@@ -3,6 +3,7 @@ package gg.aswedrown.server.packetlistener.lobby;
 import gg.aswedrown.net.LeaveLobbyRequest;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.net.PacketWrapper;
+import gg.aswedrown.net.UnwrappedPacketData;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.packetlistener.PacketListener;
 import gg.aswedrown.server.packetlistener.RegisterPacketListener;
@@ -16,7 +17,8 @@ public class LeaveLobbyRequestListener extends PacketListener<LeaveLobbyRequest>
     }
 
     @Override
-    protected void processPacket(VirtualConnection virCon, LeaveLobbyRequest packet) throws Exception {
+    protected void processPacket(VirtualConnection virCon, UnwrappedPacketData packetData,
+                                 LeaveLobbyRequest packet) throws Exception {
         int result = srv.getLobbyManager().leaveFromLobby(virCon);
         NetworkService.leaveLobbyResponse(virCon, result);
     }

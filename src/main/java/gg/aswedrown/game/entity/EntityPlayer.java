@@ -1,14 +1,18 @@
 package gg.aswedrown.game.entity;
 
+import gg.aswedrown.net.SequenceNumberMath;
+import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.vircon.VirtualConnection;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
+import lombok.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class EntityPlayer extends LivingEntity {
+
+    private static final int MAX_PLAYER_ACTIONS_PER_TICK = 3;
+
+    private final Object lock = new Object();
 
     @Getter @Setter
     private volatile boolean ready,       // true - этот игрок уже загрузил измерение и готов к игре
@@ -26,7 +30,9 @@ public class EntityPlayer extends LivingEntity {
     @Getter
     private final VirtualConnection virCon; // виртуальное соединение, связанное с этим игроком
 
-    private final PlayerInputs playerInputs = new PlayerInputs(); // данные о базовом игровом вводе игрока
+    private final List<PlayerActions> playerActionsQueue = new ArrayList<>();
+
+    private final AtomicInteger newestAppliedPacketSequence = new AtomicInteger(0);
 
     public EntityPlayer(int playerId, @NonNull String playerName,
                         int character, @NonNull VirtualConnection virCon) {
@@ -45,11 +51,38 @@ public class EntityPlayer extends LivingEntity {
 
     @Override
     public void update() {
-        if (playerInputs.movingLeft)
-            posX -= 0.095f;
+        synchronized (lock) {
+            applyQueuedPlayerActions();
+        }
+    }
 
-        if (playerInputs.movingRight)
-            posX += 0.095f;
+    private void applyQueuedPlayerActions() {
+        if (!playerActionsQueue.isEmpty()) {
+            // Сортируем полученные команды по возрастанию порядкового номера пакета.
+            // (Нужно, т.к. UDP не даёт никаких гарантий по поводу порядка получения пакетов.)
+            playerActionsQueue.sort((o1, o2) -> {
+                int seq1 = o1.getSequence();
+                int seq2 = o2.getSequence();
+
+                if (seq1 == seq2)
+                    return 0; // o1 и o2 одинаково "новы"
+                else if (SequenceNumberMath.isMoreRecent(seq1, seq2))
+                    return 1; // o1 "новее", чем o2 (o2 "старее", чем o1)
+                else
+                    return -1; // o1 "старее", чем o2 (o2 "новее", чем o1)
+            });
+
+            // Применяем полученные команды в хронологическом порядке.
+            playerActionsQueue.forEach(playerActions -> playerActions.apply(this));
+
+            // Обновляем номер последней УЧТЁННОЙ (ОБРАБОТАННОЙ, ПРИМЕНЁННОЙ) команды.
+            // Ввиду сортировки выше, этот номер будет иметь последняя команда в списке.
+            newestAppliedPacketSequence.set(
+                    playerActionsQueue.get(playerActionsQueue.size() - 1).getSequence());
+
+            // Наконец, очищаем очередь команд для обработки в этом тике.
+            playerActionsQueue.clear();
+        }
     }
 
     @Override
@@ -60,17 +93,50 @@ public class EntityPlayer extends LivingEntity {
         return data;
     }
 
-    public void updatePlayerInputs(long inputsBitfield) {
-        playerInputs.movingLeft  = (inputsBitfield & PlayerInputs.BIT_MOVING_LEFT ) != 0;
-        playerInputs.movingRight = (inputsBitfield & PlayerInputs.BIT_MOVING_RIGHT) != 0;
+    public void enqueuePlayerActions(int sequence, long actionsBitfield) {
+        synchronized (lock) {
+            if (playerActionsQueue.size() == MAX_PLAYER_ACTIONS_PER_TICK)
+                playerActionsQueue.remove(0);
+
+            playerActionsQueue.add(new PlayerActions(sequence, actionsBitfield));
+        }
     }
 
-    private static final class PlayerInputs {
-        private static final long BIT_MOVING_LEFT  = 1, // 2^0
-                                  BIT_MOVING_RIGHT = 2; // 2^1
+    public int getNewestAppliedPacketSequence() {
+        synchronized (lock) {
+            return newestAppliedPacketSequence.get();
+        }
+    }
 
-        private boolean movingLeft,
-                        movingRight;
+    @RequiredArgsConstructor
+    private static final class PlayerActions {
+        private static final long ACTION_MOVE_LEFT  = 0b1,
+                                  ACTION_MOVE_RIGHT = 0b10;
+
+        @Getter (AccessLevel.PRIVATE)
+        private final int sequence;
+
+        private final long actionsBitfield;
+
+        private boolean empty() {
+            return actionsBitfield == 0;
+        }
+
+        private boolean moveLeft() {
+            return (actionsBitfield & ACTION_MOVE_LEFT) != 0;
+        }
+
+        private boolean moveRight() {
+            return (actionsBitfield & ACTION_MOVE_RIGHT) != 0;
+        }
+
+        private void apply(EntityPlayer player) {
+            if (moveLeft())
+                player.posX -= AwdServer.getServer().getPhysics().getPlayerBaseHorizontalMoveSpeed();
+
+            if (moveRight())
+                player.posX += AwdServer.getServer().getPhysics().getPlayerBaseHorizontalMoveSpeed();
+        }
     }
 
 }

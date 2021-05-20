@@ -376,10 +376,10 @@ public class LobbyManager {
                     virCon.getCurrentLocalPlayerId());
     }
 
-    public void updatePlayerInputs(@NonNull VirtualConnection virCon, long inputsBitfield) {
+    public void enqueuePlayerActions(@NonNull VirtualConnection virCon, int sequence, long actionsBitfield) {
         if (virCon.isAuthorized() && virCon.getGameLobby() != null)
-            virCon.getGameLobby().updatePlayerInputs(
-                    virCon.getCurrentLocalPlayerId(), inputsBitfield);
+            virCon.getGameLobby().enqueuePlayerActions(
+                    virCon.getCurrentLocalPlayerId(), sequence, actionsBitfield);
     }
 
     private int generateNewLobbyId() {

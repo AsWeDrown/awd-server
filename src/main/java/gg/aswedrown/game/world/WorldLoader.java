@@ -168,7 +168,7 @@ public class WorldLoader {
 
             for (int y = 0; y < scheme.getHeight(); y++) {
                 for (int x = 0; x < scheme.getWidth(); x++) {
-                    int rgb = scheme.getRGB(x, y);
+                    int rgb = scheme.getRGB(x, y) & 0x00ffffff; // удаляем альфа-канал (непрозрачность (не нужна))
                     processPixel(x, y, rgb, targetWorldData);
 
                     if (loadStatus == WorldLoadStatus.BITMAP_ERROR) {

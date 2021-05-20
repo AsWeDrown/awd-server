@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicLong;
 @RequiredArgsConstructor
 public class ActiveGameLobby {
 
+    private final Object lock = new Object();
+
     private final AwdServer srv;
 
     @Getter
@@ -56,50 +58,58 @@ public class ActiveGameLobby {
     }
 
     public EntityPlayer getPlayer(int playerId) {
-        return players.stream()
-                .filter(player -> player.getPlayerId() == playerId)
-                .findAny()
-                .orElse(null);
+        synchronized (lock) {
+            return players.stream()
+                    .filter(player -> player.getPlayerId() == playerId)
+                    .findAny()
+                    .orElse(null);
+        }
     }
 
     public void playerLoadedWorld(int playerId) {
-        EntityPlayer player = getPlayer(playerId);
+        synchronized (lock) {
+            EntityPlayer player = getPlayer(playerId);
 
-        if (player != null) {
-            // Очередной игрок комнаты сообщил об успешной загрузке мира.
-            player.setReady(true);
+            if (player != null) {
+                // Очередной игрок комнаты сообщил об успешной загрузке мира.
+                player.setReady(true);
 
-            if (players.stream().allMatch(EntityPlayer::isReady))
-                // Все игроки в комнате сообщили об успешной загрузке мира.
-                // Рассылаем команду о присоединении к миру (отображению игры на экране).
-                players.forEach(p -> NetworkService.joinWorldCommand(p.getVirCon()));
+                if (players.stream().allMatch(EntityPlayer::isReady))
+                    // Все игроки в комнате сообщили об успешной загрузке мира.
+                    // Рассылаем команду о присоединении к миру (отображению игры на экране).
+                    players.forEach(p -> NetworkService.joinWorldCommand(p.getVirCon()));
+            }
         }
     }
 
     public void playerJoinedWorld(int playerId) {
-        EntityPlayer player = getPlayer(playerId);
+        synchronized (lock) {
+            EntityPlayer player = getPlayer(playerId);
 
-        if (player != null) {
-            // Очередной игрок комнаты сообщил об успешном присоединении к миру.
-            player.setJoinedWorld(true);
+            if (player != null) {
+                // Очередной игрок комнаты сообщил об успешном присоединении к миру.
+                player.setJoinedWorld(true);
 
-            if (players.stream().allMatch(EntityPlayer::isJoinedWorld))
-                // Все игроки в комнате сообщили об успешном присоединении к миру.
-                // Приступаем к фактическому запуску игры.
-                beginGame();
+                if (players.stream().allMatch(EntityPlayer::isJoinedWorld))
+                    // Все игроки в комнате сообщили об успешном присоединении к миру.
+                    // Приступаем к фактическому запуску игры.
+                    beginGame();
+            }
         }
     }
 
     public void playerLeftWorld(int playerId) {
-        EntityPlayer player = getPlayer(playerId);
+        synchronized (lock) {
+            EntityPlayer player = getPlayer(playerId);
 
-        if (player != null) {
-            despawnEntity(player);
-            players.remove(player);
+            if (player != null) {
+                despawnEntity(player);
+                players.remove(player);
 
-            if (player.getPlayerId() == hostPlayerId)
-                // Завершаем игру при выходе хоста.
-                endGame();
+                if (player.getPlayerId() == hostPlayerId)
+                    // Завершаем игру при выходе хоста.
+                    endGame();
+            }
         }
     }
 
@@ -108,75 +118,89 @@ public class ActiveGameLobby {
      * после получения пакета JoinWorldComplete от всех игроков в комнате.
      */
     private void beginGame() {
-        if (gameBegun) {
-            log.warn("beginGame() called twice");
-            return;
-        }
-
-        gameBegun = true;
-        log.info("The game in lobby {} has begun ({} players).", lobbyId, players.size());
-
-        // Уведомляем всех игроков о спавне.. всех игроков.
-        // (Фактический спавн (на сервере) каждого игрока произошёл ранее - завершении загрузки им мира.)
-        players.forEach(this::broadcastEntitySpawn);
-
-        // Запускаем игровой цикл обновления в этой комнате.
-        long tickPeriod = 1000L / srv.getConfig().getGameTps();
-
-        // ВАЖНО использовать здесь именно scheduleAtFixedRate, чтобы сервер "изо всех сил"
-        // старался придерживаться указанного значения TPS. При обычном schedule сервер будет
-        // тикать ЗНАЧИТЕЛЬНО реже (например, ~21 раз в секунду вместо указанных 25), что в
-        // случае игровых обновлений совершенно недопустимо. У scheduleAtFixedRate есть свой
-        // недостаток: иногда фактический TPS выходит немного выше запрошенного (например,
-        // 25.005 раз вместо 25 ровно) - но это несущественно, и с этим точно можно жить.
-        new Timer().scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if (gameStopped)
-                    // Не делаем return, чтобы успеть совершить последнее обновление,
-                    // чтобы разослать игрокам все необходимые пакеты (о завершении).
-                    cancel();
-
-                update();
+        synchronized (lock) {
+            if (gameBegun) {
+                log.warn("beginGame() called twice");
+                return;
             }
-        }, tickPeriod, tickPeriod);
+
+            gameBegun = true;
+            log.info("The game in lobby {} has begun ({} players).", lobbyId, players.size());
+
+            // Уведомляем всех игроков о спавне.. всех игроков.
+            // (Фактический спавн (на сервере) каждого игрока произошёл ранее - завершении загрузки им мира.)
+            players.forEach(this::broadcastEntitySpawn);
+
+            // Запускаем игровой цикл обновления в этой комнате.
+            long tickPeriod = 1000L / srv.getConfig().getGameTps();
+
+            // ВАЖНО использовать здесь именно scheduleAtFixedRate, чтобы сервер "изо всех сил"
+            // старался придерживаться указанного значения TPS. При обычном schedule сервер будет
+            // тикать ЗНАЧИТЕЛЬНО реже (например, ~21 раз в секунду вместо указанных 25), что в
+            // случае игровых обновлений совершенно недопустимо. У scheduleAtFixedRate есть свой
+            // недостаток: иногда фактический TPS выходит немного выше запрошенного (например,
+            // 25.005 раз вместо 25 ровно) - но это несущественно, и с этим точно можно жить.
+            new Timer().scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    if (gameStopped)
+                        // Не делаем return, чтобы успеть совершить последнее обновление,
+                        // чтобы разослать игрокам все необходимые пакеты (о завершении).
+                        cancel();
+
+                    update();
+                }
+            }, tickPeriod, tickPeriod);
+        }
     }
 
     private void gameEnded() {
-        log.info("Ending game in lobby {} ({} players).", lobbyId, players.size());
-        srv.getGameServer().unregisterActiveGameLobby(this);
-        // TODO: 16.05.2021 завершающие пакеты?
-    }
-
-    public void endGame() {
-        if (!gameStopped) {
-            gameStopped = true;
-            gameEnded();
+        synchronized (lock) {
+            log.info("Ending game in lobby {} ({} players).", lobbyId, players.size());
+            srv.getGameServer().unregisterActiveGameLobby(this);
+            // TODO: 16.05.2021 завершающие пакеты?
         }
     }
 
-    public void updatePlayerInputs(int playerId, long inputsBitfield) {
-        EntityPlayer player = getPlayer(playerId);
+    public void endGame() {
+        synchronized (lock) {
+            if (!gameStopped) {
+                gameStopped = true;
+                gameEnded();
+            }
+        }
+    }
 
-        if (player != null)
-            player.updatePlayerInputs(inputsBitfield);
+    public void enqueuePlayerActions(int playerId, int sequence, long actionsBitfield) {
+        synchronized (lock) {
+            EntityPlayer player = getPlayer(playerId);
+
+            if (player != null)
+                player.enqueuePlayerActions(sequence, actionsBitfield);
+        }
     }
 
     public void broadcastEntitySpawn(@NonNull Entity spawnedEntity) {
-        int                 entityType = spawnedEntity.getEntityType ();
-        int                 entityId   = spawnedEntity.getEntityId   ();
-        Map<String, String> entityData = spawnedEntity.formEntityData();
+        synchronized (lock) {
+            int                 entityType = spawnedEntity.getEntityType ();
+            int                 entityId   = spawnedEntity.getEntityId   ();
+            Map<String, String> entityData = spawnedEntity.formEntityData();
 
-        players.forEach(player -> NetworkService
-                .spawnEntity(player.getVirCon(), entityType, entityId, entityData));
+            players.forEach(player -> NetworkService
+                    .spawnEntity(player.getVirCon(), entityType, entityId, entityData));
+        }
     }
 
     public void setWorld(int dimension, @NonNull World world) {
-        dimensions.put(dimension, world);
+        synchronized (lock) {
+            dimensions.put(dimension, world);
+        }
     }
 
     public World getWorld(int dimension) {
-        return dimensions.get(dimension);
+        synchronized (lock) {
+            return dimensions.get(dimension);
+        }
     }
 
     /**
@@ -192,10 +216,12 @@ public class ActiveGameLobby {
      * сущность) о добавлении новой сущности в их мир.
      */
     public void transitEntity(@NonNull Entity entity, @NonNull World newWorld) {
-        if (entity.getCurrentDimension() != newWorld.getDimension()) {
-            despawnEntity(entity);
-            entity.setCurrentDimension(newWorld.getDimension());
-            newWorld.addEntity(entity);
+        synchronized (lock) {
+            if (entity.getCurrentDimension() != newWorld.getDimension()) {
+                despawnEntity(entity);
+                entity.setCurrentDimension(newWorld.getDimension());
+                newWorld.addEntity(entity);
+            }
         }
     }
 
@@ -205,21 +231,23 @@ public class ActiveGameLobby {
      * мира. Кроме того, сбрасывает текущее измерение этой сущности на ноль.
      */
     public void despawnEntity(@NonNull Entity entity) {
-        World currentWorld = getWorld(entity.getCurrentDimension());
+        synchronized (lock) {
+            World currentWorld = getWorld(entity.getCurrentDimension());
 
-        if (currentWorld != null) {
-            // Удаляем сущность из её текущего мира.
-            if (currentWorld.removeEntity(entity)) {
-                // Оповещаем всех игроков в старом мире этой сущности об её удалении из этого мира.
-                players.stream()
-                        .filter(player ->
-                                player.getCurrentDimension() == entity.getCurrentDimension())
-                        .forEach(player ->
-                                NetworkService.despawnEntity(player.getVirCon(), entity.getEntityId()));
+            if (currentWorld != null) {
+                // Удаляем сущность из её текущего мира.
+                if (currentWorld.removeEntity(entity)) {
+                    // Оповещаем всех игроков в старом мире этой сущности об её удалении из этого мира.
+                    players.stream()
+                            .filter(player ->
+                                    player.getCurrentDimension() == entity.getCurrentDimension())
+                            .forEach(player ->
+                                    NetworkService.despawnEntity(player.getVirCon(), entity.getEntityId()));
+                }
+
+                // Сбрасываем текущее измерение этой сущности на ноль.
+                entity.setCurrentDimension(0);
             }
-
-            // Сбрасываем текущее измерение этой сущности на ноль.
-            entity.setCurrentDimension(0);
         }
     }
 
@@ -231,12 +259,14 @@ public class ActiveGameLobby {
      */
     @SuppressWarnings ("JavadocReference")
     private void update() {
-        currentTick.incrementAndGet();
-        tpsMeter.onUpdate();
+        synchronized (lock) {
+            currentTick.incrementAndGet();
+            tpsMeter.onUpdate();
 
-        srv.getVirConManager().flushAllReceiveQueues(); // обрабатываем пакеты, полученные от игроков
-        updateGameState();                              // выполняем обновление (и, м.б., ставим на отправку пакеты)
-        srv.getVirConManager().flushAllSendQueues();    // отправляем пакеты, поставленые в очередь после обновления
+            srv.getVirConManager().flushAllReceiveQueues(); // обрабатываем пакеты, полученные от игроков
+            updateGameState();                              // выполняем обновление (и, м.б., ставим на отправку пакеты)
+            srv.getVirConManager().flushAllSendQueues();    // отправляем пакеты, поставленые в очередь после обновления
+        }
     }
 
     private void updateGameState() {
@@ -266,6 +296,7 @@ public class ActiveGameLobby {
                         entity -> players.forEach(
                                 player -> NetworkService.updateEntityPosition(
                                         player.getVirCon(),
+                                        player.getNewestAppliedPacketSequence(),
                                         entity.getEntityId(),
                                         entity.getPosX(),
                                         entity.getPosY(),

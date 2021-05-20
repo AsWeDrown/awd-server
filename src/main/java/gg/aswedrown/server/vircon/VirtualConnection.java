@@ -34,7 +34,6 @@ public class VirtualConnection {
 
     private final InetAddress addr;
 
-    @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
     private final NetworkHandle handle;
 
     @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
@@ -177,6 +176,14 @@ public class VirtualConnection {
     }
 
     /**
+     * @see #sendPacket(Message) - то же самое, но эта перегрузка позволяет ещё и подменить
+     *                             номер последнего пакета, полученного сервером от клиента.
+     */
+    public boolean sendPacket(@NonNull Message packet, int ack) {
+        return handle.sendPacket(false, packet, ack);
+    }
+
+    /**
      * Если пакет не дойдёт до цели, будем пытаться отправить его повторно.
      *
      * Используется для важных единоразовых пакетов, потеря которых недопустима
@@ -185,6 +192,14 @@ public class VirtualConnection {
      */
     public boolean sendImportantPacket(@NonNull Message packet) {
         return handle.sendPacket(true, packet);
+    }
+
+    /**
+     * @see #sendImportantPacket(Message) - то же самое, но эта перегрузка позволяет ещё и подменить
+     *                                      номер последнего пакета, полученного сервером от клиента.
+     */
+    public boolean sendImportantPacket(@NonNull Message packet, int ack) {
+        return handle.sendPacket(true, packet, ack);
     }
 
     public float getPacketLossPercent() {

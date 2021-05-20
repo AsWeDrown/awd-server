@@ -79,7 +79,7 @@ public class PacketManager {
                 PacketListener<?> listener = listeners.get(packetData.getPacketType());
 
                 if (listener != null)
-                    listener.packetReceived(virCon, packetData.getPacket());
+                    listener.packetReceived(virCon, packetData);
                 else
                     log.error("Ignoring a {} packet from {} - no corresponding packet listener wired.",
                             packetData.getPacketType(), virCon.getAddr().getHostAddress());

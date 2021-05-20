@@ -1,5 +1,7 @@
 package gg.aswedrown.server;
 
+import gg.aswedrown.config.AwdServerConfig;
+import gg.aswedrown.config.PhysicsConfig;
 import gg.aswedrown.game.GameServer;
 import gg.aswedrown.net.PacketManager;
 import gg.aswedrown.server.command.ConsoleCommandDispatcher;
@@ -12,14 +14,9 @@ import gg.aswedrown.server.vircon.VirtualConnectionManager;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import me.darksidecode.kantanj.db.mongo.MongoManager;
-import org.yaml.snakeyaml.Yaml;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.StandardCopyOption;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -37,6 +34,9 @@ public final class AwdServer {
 
     @Getter
     private AwdServerConfig config;
+
+    @Getter
+    private PhysicsConfig physics;
 
     @Getter
     private ExecutorService executor;
@@ -68,8 +68,8 @@ public final class AwdServer {
 
         startupBeginTime = System.currentTimeMillis();
 
-        // Загружаем конфиг из файла (или генерируем и используем дефолтный, если файл отсутствует).
-        loadConfig();
+        // Загружаем конфиги из файлов (или генерируем и используем дефолтные, если файлы отсутствуют).
+        loadConfigs();
 
         // Настраиваем основные компоненты, необходимые для работы сервера.
         setupShutdownHook();
@@ -86,43 +86,9 @@ public final class AwdServer {
         startUdpSocketServer();
     }
 
-    private void loadConfig() throws IOException {
-
-        // Загрузка конфига
-
-        File configFile = new File(AwdServerConfig.FILE_NAME);
-
-        if (!configFile.exists()) {
-            log.warn("Missing config file {} in the working directory. " +
-                            "A default configuration file will be copied from the server JAR.",
-                    AwdServerConfig.FILE_NAME);
-
-            try (InputStream in = Thread.currentThread()
-                    .getContextClassLoader().getResourceAsStream(AwdServerConfig.FILE_NAME)) {
-                if (in == null)
-                    throw new NoSuchFileException(
-                            "config file not bundled in the JAR: " + AwdServerConfig.FILE_NAME);
-
-                Files.copy(in, configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
-
-        try (Reader reader = new InputStreamReader(
-                new FileInputStream("awd-server-config.yml"), StandardCharsets.UTF_8)) {
-            config = new Yaml().loadAs(reader, AwdServerConfig.class);
-        }
-
-        // Базовая валидация конфига
-
-        if (config.getSchemaVersion() != AwdServerConfig.SCHEMA_VERSION)
-            throw new IllegalArgumentException(
-                    "incompatible configuration file, aborting startup; file schema: "
-                            + config.getSchemaVersion() + ", server schema: " + AwdServerConfig.SCHEMA_VERSION);
-
-        if (config.getUdpMaxVirtualConnections() >= config.getExecutorMaxThreads())
-            throw new IllegalArgumentException(
-                    "invalid configuration: udpMaxVirtualConnections must be less than executorMaxThreads");
-
+    private void loadConfigs() throws IOException {
+        config  = AwdServerConfig.loadOrDefault();
+        physics = PhysicsConfig  .loadOrDefault();
     }
 
     private void setupExecutor() {

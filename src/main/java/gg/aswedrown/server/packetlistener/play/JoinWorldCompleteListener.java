@@ -2,6 +2,7 @@ package gg.aswedrown.server.packetlistener.play;
 
 import gg.aswedrown.net.JoinWorldComplete;
 import gg.aswedrown.net.PacketWrapper;
+import gg.aswedrown.net.UnwrappedPacketData;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.packetlistener.PacketListener;
 import gg.aswedrown.server.packetlistener.RegisterPacketListener;
@@ -15,7 +16,8 @@ public class JoinWorldCompleteListener extends PacketListener<JoinWorldComplete>
     }
 
     @Override
-    protected void processPacket(VirtualConnection virCon, JoinWorldComplete packet) throws Exception {
+    protected void processPacket(VirtualConnection virCon, UnwrappedPacketData packetData,
+                                 JoinWorldComplete packet) throws Exception {
         srv.getLobbyManager().joinWorldComplete(virCon);
     }
 
