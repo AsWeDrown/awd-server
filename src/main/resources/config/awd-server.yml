@@ -59,11 +59,7 @@ cleanerLobbiesMaxIdleMillis: 1200000 # 20 минут
 cleanerLobbiesCleanupPeriodMillis: 600000 # 10 минут
 
 # Максимальное время жизни бездействующих виртуальных соединений.
-cleanerVirConsMaxIdleMillis: 5000 # 5 секунд
-
-# Периодичность чистки виртуальных соединений.
-#TODO replace with kick on ping()
-cleanerVirConsCleanupPeriodMillis: 2500 # 2.5 секунды
+cleanerVirConsMaxIdleMillis: 3000 # 3 секунды
 
 
 

@@ -25,7 +25,7 @@ public class VirtualConnection {
 
     private static final int   MAX_SEND_QUEUE_SIZE                = 20  ;
     private static final int   MAX_PENDING_PING_TESTS             = 20  ;
-    private static final int   GOOD_RTT_THRESHOLD                 = 90  ;
+    private static final int   GOOD_RTT_THRESHOLD                 = 80  ;
     private static final float GOOD_PACKET_LOSS_PERCENT_THRESHOLD = 2.5f;
 
     private final Object lock = new Object();
@@ -66,11 +66,16 @@ public class VirtualConnection {
         this.handle = new NetworkHandle(srv.getUdpServer(), addr);
     }
 
-    long getMillisSinceLastPong() {
-        return System.currentTimeMillis() - lastPongDateTime;
-    }
+    /**
+     * @return true, если это соединение помечено как неактивное (клиент не отвечает на Ping-пакеты),
+     *         и его нужно закрыть, false - в противном случае, т.е. если это соединение ещё активно.
+     */
+    public boolean ping() {
+        long idleMillis = System.currentTimeMillis() - lastPongDateTime;
 
-    public void ping() {
+        if (idleMillis > srv.getConfig().getCleanerVirConsMaxIdleMillis())
+            return true; // соединение уже неактивно - его нужно закрыть
+
         int testId = ThreadLocalRandom.current().nextInt(
                 Constraints.MIN_INT32_ID, Constraints.MAX_INT32_ID);
 
@@ -82,6 +87,8 @@ public class VirtualConnection {
         }
 
         NetworkService.ping(this, testId, lastRtt);
+
+        return false; // соединение ещё активно - его не нужно закрывать
     }
 
     public void pongReceived(int testId) {

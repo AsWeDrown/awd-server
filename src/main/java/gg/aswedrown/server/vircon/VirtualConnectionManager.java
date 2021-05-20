@@ -2,37 +2,23 @@ package gg.aswedrown.server.vircon;
 
 import gg.aswedrown.server.AwdServer;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @Slf4j
+@RequiredArgsConstructor
 public class VirtualConnectionManager {
 
     private final AwdServer srv;
 
     private final Map<InetAddress, VirtualConnection> virConMap = new ConcurrentHashMap<>();
-
-    public VirtualConnectionManager(@NonNull AwdServer srv) {
-        this.srv = srv;
-
-        // Запускаем периодическую чистку старых, ненужных данных.
-        long period = srv.getConfig().getCleanerVirConsCleanupPeriodMillis();
-
-        new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                closeIdleVirtualConnections();
-            }
-        }, period, period);
-    }
 
     public int getActiveVirtualConnections() {
         return virConMap.size();
@@ -74,17 +60,13 @@ public class VirtualConnectionManager {
         return virCon;
     }
 
-    public void closeVirtualConnection(@NonNull InetAddress addr) {
-        VirtualConnection virCon = virConMap.get(addr);
+    private void closeVirtualConnection(@NonNull VirtualConnection virCon) {
+        virConMap.remove(virCon.getAddr());
 
-        if (virCon != null) {
-            virConMap.remove(addr);
-
-            try {
-                virCon.connectionClosed();
-            } catch (Exception ex) {
-                log.error("Error in connectionClosed() ({}):", addr.getHostAddress(), ex);
-            }
+        try {
+            virCon.connectionClosed();
+        } catch (Exception ex) {
+            log.error("Error in connectionClosed({}):", virCon.getAddr().getHostAddress(), ex);
         }
     }
 
@@ -104,22 +86,19 @@ public class VirtualConnectionManager {
     }
 
     /**
-     * Пингует клиентов из списка подключённых, удовлетворяющих указанному условию.
+     * Пингует клиентов из списка подключённых, удовлетворяющих указанному,
+     * условию а также сразу отключает (закрывает) неактивные соединения.
      */
     public void pingThose(@NonNull Predicate<? super VirtualConnection> pred) {
-        virConMap.values().stream().filter(pred).forEach(VirtualConnection::ping);
-    }
+        // Делаем копию во избежание concurrent mod.
+        List<VirtualConnection> closeQueue = new ArrayList<>();
 
-    private void closeIdleVirtualConnections() {
-        Set<InetAddress> idle = virConMap.keySet().stream()
-                .filter(addr -> virConMap.get(addr).getMillisSinceLastPong()
-                        >= srv.getConfig().getCleanerVirConsMaxIdleMillis())
-                .collect(Collectors.toSet());
+        virConMap.values().stream()
+                .filter(pred)
+                .filter(VirtualConnection::ping)
+                .forEach(closeQueue::add);
 
-        if (!idle.isEmpty()) {
-            log.info("Closing {} idle virtual connections (timed out).", idle.size());
-            idle.forEach(this::closeVirtualConnection);
-        }
+        closeQueue.forEach(this::closeVirtualConnection);
     }
 
 }

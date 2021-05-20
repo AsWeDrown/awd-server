@@ -1,10 +1,11 @@
 package gg.aswedrown.config;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.io.IOException;
 
-@Getter
+@Getter @Setter /* сеттеры нужны для snake-yaml */
 public class AwdServerConfig {
 
     private static final transient String FILE_NAME = "config/awd-server.yml";
@@ -29,7 +30,6 @@ public class AwdServerConfig {
             cleanerLobbiesMaxIdleMillis,
             cleanerLobbiesCleanupPeriodMillis,
             cleanerVirConsMaxIdleMillis,
-            cleanerVirConsCleanupPeriodMillis,
 
             gameTps,
             maxLobbySize,

@@ -29,12 +29,14 @@ public final class ConfigurationLoader {
                     throw new NoSuchFileException(
                             "config file not bundled in the JAR: " + fileName);
 
+                //noinspection ResultOfMethodCallIgnored
+                configFile.mkdirs();
                 Files.copy(in, configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
         }
 
         try (Reader reader = new InputStreamReader(
-                new FileInputStream("config/awd-server.yml"), StandardCharsets.UTF_8)) {
+                new FileInputStream(configFile), StandardCharsets.UTF_8)) {
             return new Yaml().loadAs(reader, configClass);
         }
     }

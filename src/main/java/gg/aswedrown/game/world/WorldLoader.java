@@ -126,7 +126,7 @@ public class WorldLoader {
 
         try {
             // Читаем и обрабатываем метаданные о мире (размеры текстур и т.п.).
-            String dimFolder = "assets/worlds/dim_" + dimension;
+            String dimFolder = "worlds/dim_" + dimension;
             Scanner levelMeta = new Scanner(new File(dimFolder + "/level-meta.dat"));
             String token;
 
