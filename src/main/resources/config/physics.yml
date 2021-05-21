@@ -1,2 +1,7 @@
 schemaVersion: 1
-playerBaseHorizontalMoveSpeed: 0.1025
+maxLag: 10
+interpDelay: 5
+interpBufSizeThreshold: 10
+playerBaseHorMs: 0.1025
+baseEntityPlayerW: 1.375
+baseEntityPlayerH: 2.125

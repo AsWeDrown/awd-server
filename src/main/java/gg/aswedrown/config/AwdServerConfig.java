@@ -35,7 +35,8 @@ public class AwdServerConfig {
             maxLobbySize,
             nonplayPingPeriodTicks,
             playPingPeriodTicks,
-            minPlayersToStart;
+            minPlayersToStart,
+            playerActionsBufferSize;
 
     public static AwdServerConfig loadOrDefault() throws IOException {
         AwdServerConfig config = ConfigurationLoader

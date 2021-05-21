@@ -171,12 +171,12 @@ public class ActiveGameLobby {
         }
     }
 
-    public void enqueuePlayerActions(int playerId, int sequence, long actionsBitfield) {
+    public void enqueuePlayerInputs(int playerId, int sequence, long inputsBitfield) {
         synchronized (lock) {
             EntityPlayer player = getPlayer(playerId);
 
             if (player != null)
-                player.enqueuePlayerActions(sequence, actionsBitfield);
+                player.enqueuePlayerInputs(sequence, inputsBitfield);
         }
     }
 

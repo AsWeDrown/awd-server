@@ -5,6 +5,9 @@ import lombok.Setter;
 
 import java.io.IOException;
 
+/**
+ * https://github.com/AsWeDrown/awd-protocol/wiki/Physics-Config
+ */
 @Getter @Setter /* сеттеры нужны для snake-yaml */
 public class PhysicsConfig {
 
@@ -16,11 +19,14 @@ public class PhysicsConfig {
      */
     private static final transient int SCHEMA_VERSION = 1;
 
-    private int
-            schemaVersion;
+    private int schemaVersion;
 
-    private float
-            playerBaseHorizontalMoveSpeed;
+    private int   maxLag;
+    private int   interpDelay;
+    private int   interpBufSizeThreshold;
+    private float playerBaseHorMs;
+    private float baseEntityPlayerW;
+    private float baseEntityPlayerH;
 
     public static PhysicsConfig loadOrDefault() throws IOException {
         PhysicsConfig config = ConfigurationLoader

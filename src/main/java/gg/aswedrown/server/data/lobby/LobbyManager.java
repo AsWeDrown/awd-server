@@ -119,7 +119,7 @@ public class LobbyManager {
             if (membersNames.size() == srv.getConfig().getMaxLobbySize())
                 return JoinResult.LOBBY_IS_FULL;
 
-            if (membersNames.keySet().stream().anyMatch(playerName::equalsIgnoreCase))
+            if (membersNames.values().stream().anyMatch(playerName::equalsIgnoreCase))
                 return JoinResult.PLAYER_NAME_TAKEN;
 
             Map<Integer, Integer> membersCharacters
@@ -376,10 +376,10 @@ public class LobbyManager {
                     virCon.getCurrentLocalPlayerId());
     }
 
-    public void enqueuePlayerActions(@NonNull VirtualConnection virCon, int sequence, long actionsBitfield) {
+    public void enqueuePlayerInputs(@NonNull VirtualConnection virCon, int sequence, long inputsBitfield) {
         if (virCon.isAuthorized() && virCon.getGameLobby() != null)
-            virCon.getGameLobby().enqueuePlayerActions(
-                    virCon.getCurrentLocalPlayerId(), sequence, actionsBitfield);
+            virCon.getGameLobby().enqueuePlayerInputs(
+                    virCon.getCurrentLocalPlayerId(), sequence, inputsBitfield);
     }
 
     private int generateNewLobbyId() {

@@ -10,8 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class EntityPlayer extends LivingEntity {
 
-    private static final int MAX_PLAYER_ACTIONS_PER_TICK = 3;
-
     private final Object lock = new Object();
 
     @Getter @Setter
@@ -29,8 +27,8 @@ public class EntityPlayer extends LivingEntity {
 
     @Getter
     private final VirtualConnection virCon; // виртуальное соединение, связанное с этим игроком
-
-    private final List<PlayerActions> playerActionsQueue = new ArrayList<>();
+    
+    private final Queue<PlayerInputs> playerInputsQueue = new PriorityQueue<>();
 
     private final AtomicInteger newestAppliedPacketSequence = new AtomicInteger(0);
 
@@ -52,36 +50,11 @@ public class EntityPlayer extends LivingEntity {
     @Override
     public void update() {
         synchronized (lock) {
-            applyQueuedPlayerActions();
-        }
-    }
-
-    private void applyQueuedPlayerActions() {
-        if (!playerActionsQueue.isEmpty()) {
-            // Сортируем полученные команды по возрастанию порядкового номера пакета.
-            // (Нужно, т.к. UDP не даёт никаких гарантий по поводу порядка получения пакетов.)
-            playerActionsQueue.sort((o1, o2) -> {
-                int seq1 = o1.getSequence();
-                int seq2 = o2.getSequence();
-
-                if (seq1 == seq2)
-                    return 0; // o1 и o2 одинаково "новы"
-                else if (SequenceNumberMath.isMoreRecent(seq1, seq2))
-                    return 1; // o1 "новее", чем o2 (o2 "старее", чем o1)
-                else
-                    return -1; // o1 "старее", чем o2 (o2 "новее", чем o1)
-            });
-
-            // Применяем полученные команды в хронологическом порядке.
-            playerActionsQueue.forEach(playerActions -> playerActions.apply(this));
-
-            // Обновляем номер последней УЧТЁННОЙ (ОБРАБОТАННОЙ, ПРИМЕНЁННОЙ) команды.
-            // Ввиду сортировки выше, этот номер будет иметь последняя команда в списке.
-            newestAppliedPacketSequence.set(
-                    playerActionsQueue.get(playerActionsQueue.size() - 1).getSequence());
-
-            // Наконец, очищаем очередь команд для обработки в этом тике.
-            playerActionsQueue.clear();
+            if (!playerInputsQueue.isEmpty()) {
+                PlayerInputs oldestInputs = playerInputsQueue.poll();
+                oldestInputs.apply(this);
+                newestAppliedPacketSequence.set(oldestInputs.getSequence());
+            }
         }
     }
 
@@ -93,12 +66,12 @@ public class EntityPlayer extends LivingEntity {
         return data;
     }
 
-    public void enqueuePlayerActions(int sequence, long actionsBitfield) {
+    public void enqueuePlayerInputs(int sequence, long inputsBitfield) {
         synchronized (lock) {
-            if (playerActionsQueue.size() == MAX_PLAYER_ACTIONS_PER_TICK)
-                playerActionsQueue.remove(0);
-
-            playerActionsQueue.add(new PlayerActions(sequence, actionsBitfield));
+            if (playerInputsQueue.size() == AwdServer.getServer().getPhysics().getMaxLag())
+                playerInputsQueue.poll();
+			
+            playerInputsQueue.add(new PlayerInputs(sequence, inputsBitfield));
         }
     }
 
@@ -109,33 +82,39 @@ public class EntityPlayer extends LivingEntity {
     }
 
     @RequiredArgsConstructor
-    private static final class PlayerActions {
-        private static final long ACTION_MOVE_LEFT  = 0b1,
-                                  ACTION_MOVE_RIGHT = 0b10;
+    private static final class PlayerInputs implements Comparable<PlayerInputs> {
+        private static final long INPUT_MOVING_LEFT  = 0b1,
+                                  INPUT_MOVING_RIGHT = 0b10;
 
         @Getter (AccessLevel.PRIVATE)
         private final int sequence;
 
-        private final long actionsBitfield;
+        private final long inputsBitfield;
 
-        private boolean empty() {
-            return actionsBitfield == 0;
+        private boolean movingLeft() {
+            return (inputsBitfield & INPUT_MOVING_LEFT) != 0;
         }
 
-        private boolean moveLeft() {
-            return (actionsBitfield & ACTION_MOVE_LEFT) != 0;
-        }
-
-        private boolean moveRight() {
-            return (actionsBitfield & ACTION_MOVE_RIGHT) != 0;
+        private boolean movingRight() {
+            return (inputsBitfield & INPUT_MOVING_RIGHT) != 0;
         }
 
         private void apply(EntityPlayer player) {
-            if (moveLeft())
-                player.posX -= AwdServer.getServer().getPhysics().getPlayerBaseHorizontalMoveSpeed();
+            if (movingLeft())
+                player.posX -= AwdServer.getServer().getPhysics().getPlayerBaseHorMs();
 
-            if (moveRight())
-                player.posX += AwdServer.getServer().getPhysics().getPlayerBaseHorizontalMoveSpeed();
+            if (movingRight())
+                player.posX += AwdServer.getServer().getPhysics().getPlayerBaseHorMs();
+        }
+
+        @Override
+        public int compareTo(@NonNull PlayerInputs other) {
+            if (sequence == other.sequence)
+                return 0;  // эти (this и other) PlayerInputs одинаковой "новизны"
+            else if (SequenceNumberMath.isMoreRecent(sequence, other.sequence))
+                return 1;  // этот (this) PlayerInputs "новее" указанного (other)
+            else
+                return -1; // этот (this) PlayerInputs "старее" указанного (other)
         }
     }
 

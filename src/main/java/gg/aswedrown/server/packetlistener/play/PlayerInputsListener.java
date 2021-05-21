@@ -1,26 +1,25 @@
 package gg.aswedrown.server.packetlistener.play;
 
 import gg.aswedrown.net.PacketWrapper;
-import gg.aswedrown.net.PlayerActions;
 import gg.aswedrown.net.UnwrappedPacketData;
+import gg.aswedrown.net.UpdatePlayerInputs;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.packetlistener.PacketListener;
 import gg.aswedrown.server.packetlistener.RegisterPacketListener;
 import gg.aswedrown.server.vircon.VirtualConnection;
 
-@RegisterPacketListener (PacketWrapper.PacketCase.PLAYER_ACTIONS)
-public class PlayerActionsListener extends PacketListener<PlayerActions> {
+@RegisterPacketListener (PacketWrapper.PacketCase.UPDATE_PLAYER_INPUTS)
+public class PlayerInputsListener extends PacketListener<UpdatePlayerInputs> {
 
-    public PlayerActionsListener(AwdServer srv) {
+    public PlayerInputsListener(AwdServer srv) {
         super(srv);
     }
 
     @Override
     protected void processPacket(VirtualConnection virCon, UnwrappedPacketData packetData,
-                                 PlayerActions packet) throws Exception {
-        if (packet.getActionsBitfield() != 0)
-            srv.getLobbyManager().enqueuePlayerActions(
-                    virCon, packetData.getSequence(), packet.getActionsBitfield());
+                                 UpdatePlayerInputs packet) throws Exception {
+        srv.getLobbyManager().enqueuePlayerInputs(
+                virCon, packetData.getSequence(), packet.getInputsBitfield());
     }
 
 }
