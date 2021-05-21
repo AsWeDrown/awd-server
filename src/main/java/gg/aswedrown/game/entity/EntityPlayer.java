@@ -4,10 +4,12 @@ import gg.aswedrown.net.SequenceNumberMath;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Slf4j
 public class EntityPlayer extends LivingEntity {
 
     private final Object lock = new Object();
@@ -52,8 +54,8 @@ public class EntityPlayer extends LivingEntity {
         synchronized (lock) {
             if (!playerInputsQueue.isEmpty()) {
                 PlayerInputs oldestInputs = playerInputsQueue.poll();
-                oldestInputs.apply(this);
                 newestAppliedPacketSequence.set(oldestInputs.getSequence());
+                oldestInputs.apply(this);
             }
         }
     }
@@ -68,8 +70,11 @@ public class EntityPlayer extends LivingEntity {
 
     public void enqueuePlayerInputs(int sequence, long inputsBitfield) {
         synchronized (lock) {
-            if (playerInputsQueue.size() == AwdServer.getServer().getPhysics().getMaxLag())
+            if (playerInputsQueue.size() == AwdServer.getServer().getPhysics().getMaxLag()) {
                 playerInputsQueue.poll();
+                log.warn("Player {}#{} appears to be lagging heavily: dropped PlayerInputs #{} (0b{}).",
+                        playerName, playerId, sequence, Long.toString(inputsBitfield, 2));
+            }
 			
             playerInputsQueue.add(new PlayerInputs(sequence, inputsBitfield));
         }
@@ -100,11 +105,15 @@ public class EntityPlayer extends LivingEntity {
         }
 
         private void apply(EntityPlayer player) {
-            if (movingLeft())
+            if (movingLeft()) {
                 player.posX -= AwdServer.getServer().getPhysics().getPlayerBaseHorMs();
+                player.faceAngle = 180.0f; // лицом влево
+            }
 
-            if (movingRight())
+            if (movingRight()) {
                 player.posX += AwdServer.getServer().getPhysics().getPlayerBaseHorMs();
+                player.faceAngle = 0.0f; // лицом вправо
+            }
         }
 
         @Override

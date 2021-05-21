@@ -37,7 +37,7 @@ public class ConsoleCommandStats extends ConsoleCommand {
             log.info("  Active connections: {}", activeConns);
             log.info("  Authorized connections: {} ({}%)", authdConns,
                     String.format("%.2f", 100.0 * authdConns / activeConns));
-            log.info("  Average connections' RTT: {} ms", srv.getVirConManager().getAverageRtt());
+            log.info("  Average connections' RTT: {} ms", srv.getVirConManager().averageRtt());
             log.info("  ");
             log.info("  Active game lobbies: {}", srv.getGameServer().getActiveGameLobbies());
             log.info("  Root game server TPS: {}",
@@ -74,6 +74,8 @@ public class ConsoleCommandStats extends ConsoleCommand {
 
                         log.info(HEADER);
                         log.info("  IP address: {}", virCon.getAddr().getHostAddress());
+                        log.info("  Incoming bandwidth: {}", virCon.averageIncomingBandwidthStr());
+                        log.info("  Outgoing bandwidth: {}", virCon.averageOutgoingBandwidthStr());
                         log.info("  Authorized: {}", virCon.isAuthorized());
                         log.info("  RTT: {} ms", virCon.getLastRtt());
                         log.info("  Packet loss: {}%", String.format("%.2f", virCon.getPacketLossPercent()));

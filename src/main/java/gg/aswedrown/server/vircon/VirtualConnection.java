@@ -4,9 +4,11 @@ import com.google.protobuf.Message;
 import gg.aswedrown.game.ActiveGameLobby;
 import gg.aswedrown.net.NetworkHandle;
 import gg.aswedrown.net.NetworkService;
+import gg.aswedrown.net.NetworkStatisticsHolder;
 import gg.aswedrown.net.UnwrappedPacketData;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.data.Constraints;
+import gg.aswedrown.server.util.Convert;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -18,15 +20,16 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Getter @Setter
-public class VirtualConnection {
+public class VirtualConnection implements NetworkStatisticsHolder {
 
     private static final int   MAX_SEND_QUEUE_SIZE                = 20  ;
     private static final int   MAX_PENDING_PING_TESTS             = 20  ;
-    private static final int   GOOD_RTT_THRESHOLD                 = 80  ;
-    private static final float GOOD_PACKET_LOSS_PERCENT_THRESHOLD = 2.5f;
+    private static final int   GOOD_RTT_THRESHOLD                 = 99  ;
+    private static final float GOOD_PACKET_LOSS_PERCENT_THRESHOLD = 3.0f;
 
     private final Object lock = new Object();
 
@@ -35,6 +38,8 @@ public class VirtualConnection {
     private final InetAddress addr;
 
     private final NetworkHandle handle;
+
+    private final long establishedDateTime = System.currentTimeMillis();
 
     @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
     private final Deque<PingTest> pendingPingTests = new ArrayDeque<>();
@@ -58,12 +63,46 @@ public class VirtualConnection {
 
     private volatile long lastPongDateTime = System.currentTimeMillis();
 
+    @Getter (AccessLevel.NONE) /* закрываем сторонний доступ к этому полю */
+    private final AtomicLong incomingTrafficBytes = new AtomicLong(0L),
+                             outgoingTrafficBytes = new AtomicLong(0L);
+
     private ActiveGameLobby gameLobby;
 
     VirtualConnection(@NonNull AwdServer srv, @NonNull InetAddress addr) {
         this.srv = srv;
         this.addr = addr;
-        this.handle = new NetworkHandle(srv.getUdpServer(), addr);
+        this.handle = new NetworkHandle(srv.getUdpServer(), addr, this);
+    }
+
+    public long millisSinceEstablish() {
+        return System.currentTimeMillis() - establishedDateTime;
+    }
+
+    @Override
+    public void addIncomingTraffic(long bytes) {
+        incomingTrafficBytes.addAndGet(bytes);
+    }
+
+    @Override
+    public void addOutgoingTraffic(long bytes) {
+        outgoingTrafficBytes.addAndGet(bytes);
+    }
+
+    public String averageIncomingBandwidthStr() {
+        return averageBandwidthStr(incomingTrafficBytes.get());
+    }
+
+    public String averageOutgoingBandwidthStr() {
+        return averageBandwidthStr(outgoingTrafficBytes.get());
+    }
+
+    private String averageBandwidthStr(long trafficBytes) {
+        long secsSinceEst   = millisSinceEstablish() / 1000L;
+        long bytesPerSecond = trafficBytes           / secsSinceEst;
+        long bitsPerSecond  = bytesPerSecond         * 8L;
+
+        return Convert.toHumanReadableBandwidth(bitsPerSecond);
     }
 
     /**

@@ -70,7 +70,7 @@ public class VirtualConnectionManager {
         }
     }
 
-    public long getAverageRtt() {
+    public long averageRtt() {
         return (long) virConMap.values().stream()
                 .mapToLong(VirtualConnection::getLastRtt)
                 .average()

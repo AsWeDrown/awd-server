@@ -32,6 +32,9 @@ public class NetworkHandle {
     @NonNull
     private final InetAddress addr;
 
+    @NonNull
+    private final NetworkStatisticsHolder netStatsHolder;
+
     /**
      * 33 самых "новых" пакета, которые мы отправили другой стороне
      * (хранится в том числе и содержимое этих пакетов для возможности
@@ -88,7 +91,7 @@ public class NetworkHandle {
     }
 
     /* Этот метод гарантирует потокобезопасность. Его вызов должен НЕ быть обёрнут в блокирующий блок. */
-    void packetReceived(@NonNull UnwrappedPacketData data) {
+    private void packetReceived(@NonNull UnwrappedPacketData data) {
         synchronized (lock) {
             // Обновляем удалённый sequence number и добавляем sequence number этого пакета
             // в список недавно полученных (для дальнейшего "оповещения" о получении).
@@ -140,9 +143,6 @@ public class NetworkHandle {
     private void packetSent(PacketContainer pContainer) {
         // Обновляем локальный sequence number только после успешной отправки этого пакета.
         localSequenceNumber.set(SequenceNumberMath.add(localSequenceNumber.get(), 1));
-		
-        if (localSequenceNumber.get() == SequenceNumberMath.SEQUENCE_NUMBER_WRAP_AROUND_THRESHOLD)
-            localSequenceNumber.set(0); // wrap-around
 
         // Запоминаем этот пакет (но только в случае успешной отправки).
         // В случае потери пакета это поможет отправить его повторно, но
@@ -217,6 +217,7 @@ public class NetworkHandle {
     }
 
     public UnwrappedPacketData receivePacket(@NonNull byte[] packetData) {
+        netStatsHolder.addIncomingTraffic(packetData.length);
         UnwrappedPacketData unwrappedPacketData;
 
         try {
@@ -283,6 +284,7 @@ public class NetworkHandle {
 
                 // Отправляем пакет по UDP.
                 udpServer.sendRaw(addr, data);
+                netStatsHolder.addOutgoingTraffic(data.length);
 
                 // "Протоколообразующие" манипуляции.
                 packetSent(new PacketContainer(
