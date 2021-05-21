@@ -50,7 +50,7 @@ public class ConsoleCommandStats extends ConsoleCommand {
             String param = args[0];
 
             if (param.length() > 1) {
-                char targetType = Character.toLowerCase(param.charAt(0));
+                char targetType = Character.toUpperCase(param.charAt(0));
                 String target = param.substring(1);
 
                 switch (targetType) {
