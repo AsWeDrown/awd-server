@@ -1,7 +1,11 @@
 schemaVersion: 1
+
 maxLag: 10
 interpDelay: 5
 interpBufSizeThreshold: 10
-playerBaseHorMs: 0.1025
+
+baseEntityPlayerMs: 0.1325
 baseEntityPlayerW: 1.375
 baseEntityPlayerH: 2.125
+
+freeFallAcce: 9.80665

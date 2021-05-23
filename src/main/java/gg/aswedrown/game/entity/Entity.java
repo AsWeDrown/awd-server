@@ -1,12 +1,19 @@
 package gg.aswedrown.game.entity;
 
+import gg.aswedrown.config.PhysicsConfig;
+import gg.aswedrown.game.world.BoundingBox;
+import gg.aswedrown.game.world.Collidable;
+import gg.aswedrown.game.world.World;
+import gg.aswedrown.server.AwdServer;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Map;
 import java.util.Objects;
 
-public abstract class Entity {
+public abstract class Entity implements Collidable {
+
+    public final PhysicsConfig physics;
 
     @Getter
     private final int entityType; // тип сущности
@@ -26,12 +33,13 @@ public abstract class Entity {
 
     public Entity(int entityType) {
         this.entityType = entityType;
+        this.physics = AwdServer.getServer().getPhysics();
     }
 
     /**
      * Выполняется каждый тик, служит для обновления данных об этой сущности (game state update).
      */
-    public abstract void update();
+    public abstract void update(World world);
 
     /**
      * Генерирует контейнер вида "ключ-значение", содержащий различные важные параметры об этой сущности,
@@ -41,6 +49,11 @@ public abstract class Entity {
      * Это нужно для универсальности. Клиент сам преобразует значения из строк в нужные типы, если потребуется.
      */
     public abstract Map<String, String> formEntityData();
+
+    @Override
+    public BoundingBox getBoundingBox() {
+        return new BoundingBox(posX, posY, posX + spriteWidth, posY + spriteHeight);
+    }
 
     public void setPosition(float posX, float posY) {
         this.posX = posX;
@@ -64,12 +77,12 @@ public abstract class Entity {
         if (this == o) return true;
         if (!(o instanceof Entity)) return false;
         Entity entity = (Entity) o;
-        return entityId == entity.entityId;
+        return currentDimension == entity.currentDimension && entityId == entity.entityId;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(entityId);
+        return Objects.hash(currentDimension, entityId);
     }
 
 }

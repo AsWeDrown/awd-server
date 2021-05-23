@@ -1,7 +1,7 @@
 package gg.aswedrown.game.world;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 public class WorldData {
 
@@ -34,6 +34,6 @@ public class WorldData {
      * Базовая информация о загруженных тайлах (используется для
      * физики, взаимодействия с миром и пр. - не для прорисовки).
      */
-    public Collection<TileBlock> tiles = new ArrayList<>();
+    public Collection<TileBlock> tiles = new HashSet<>();
 
 }

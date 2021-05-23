@@ -1,12 +1,16 @@
 package gg.aswedrown.game.entity;
 
+import gg.aswedrown.game.world.World;
 import gg.aswedrown.net.SequenceNumberMath;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -36,7 +40,7 @@ public class EntityPlayer extends LivingEntity {
 
     public EntityPlayer(int playerId, @NonNull String playerName,
                         int character, @NonNull VirtualConnection virCon) {
-        super(Entities.TYPE_ENTITY_PLAYER);
+        super(Entities.EntityPlayer.TYPE);
 
         this.playerId = playerId;
         this.playerName = playerName;
@@ -45,17 +49,17 @@ public class EntityPlayer extends LivingEntity {
 
         // TODO: 15.05.2021 remove
         posX = 65.0f;
-        posY = 40.0f;
+        posY = 20.0f;
         // TODO: 15.05.2021 remove
     }
 
     @Override
-    public void update() {
+    public void update(World world) {
         synchronized (lock) {
             if (!playerInputsQueue.isEmpty()) {
                 PlayerInputs oldestInputs = playerInputsQueue.poll();
                 newestAppliedPacketSequence.set(oldestInputs.getSequence());
-                oldestInputs.apply(this);
+                oldestInputs.apply(this, world);
             }
         }
     }
@@ -104,16 +108,26 @@ public class EntityPlayer extends LivingEntity {
             return (inputsBitfield & INPUT_MOVING_RIGHT) != 0;
         }
 
-        private void apply(EntityPlayer player) {
+        private void apply(EntityPlayer player, World world) {
+            float newX = player.posX;
+            float newY = player.posY;
+
+            // Вычисляем "желаемую" позицию (куда игрок хочет передвинуться).
             if (movingLeft()) {
-                player.posX -= AwdServer.getServer().getPhysics().getPlayerBaseHorMs();
-                player.faceAngle = 180.0f; // лицом влево
+                newX -= player.physics.getBaseEntityPlayerMs();
+                player.faceAngle = 270.0f; // лицом влево
             }
 
             if (movingRight()) {
-                player.posX += AwdServer.getServer().getPhysics().getPlayerBaseHorMs();
-                player.faceAngle = 0.0f; // лицом вправо
+                newX += player.physics.getBaseEntityPlayerMs();
+                player.faceAngle = 90.0f; // лицом вправо
             }
+
+            // Вычисляем "фактическую" позицию (куда игрок может передвинуться, с учётом его "желания").
+            newX = world.pathTowardsX(player, newX);
+
+            player.posX = newX;
+            player.posY = newY;
         }
 
         @Override

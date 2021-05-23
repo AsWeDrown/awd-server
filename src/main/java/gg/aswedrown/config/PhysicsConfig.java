@@ -24,9 +24,12 @@ public class PhysicsConfig {
     private int   maxLag;
     private int   interpDelay;
     private int   interpBufSizeThreshold;
-    private float playerBaseHorMs;
+
+    private float baseEntityPlayerMs;
     private float baseEntityPlayerW;
     private float baseEntityPlayerH;
+
+    private float freeFallAcce;
 
     public static PhysicsConfig loadOrDefault() throws IOException {
         PhysicsConfig config = ConfigurationLoader

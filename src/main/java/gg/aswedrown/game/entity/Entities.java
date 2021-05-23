@@ -7,6 +7,8 @@ public final class Entities {
 
     private Entities() {}
 
-    public static final int TYPE_ENTITY_PLAYER = 1;
+    public static final class EntityPlayer {
+        public static final int TYPE = 1;
+    }
 
 }
