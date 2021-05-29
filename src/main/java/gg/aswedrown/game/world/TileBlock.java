@@ -1,5 +1,7 @@
 package gg.aswedrown.game.world;
 
+import gg.aswedrown.game.world.tile.TileHandler;
+
 import java.util.Objects;
 
 public class TileBlock implements Collidable {
@@ -8,13 +10,13 @@ public class TileBlock implements Collidable {
                posX   = 0, // координата X левого верхнего угла этого тайла в мире
                posY   = 0; // координата Y левого верхнего угла этого тайла в мире
 
+    public TileHandler getHandler() {
+        return TileData.getTileHandler(tileId);
+    }
+
     @Override
     public BoundingBox getBoundingBox() {
         return new BoundingBox(posX, posY, posX + 1.0f, posY + 1.0f);
-    }
-
-    public boolean isSolid() {
-        return TileData.isSolid(tileId);
     }
 
     @Override

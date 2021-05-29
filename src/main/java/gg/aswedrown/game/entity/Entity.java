@@ -3,7 +3,7 @@ package gg.aswedrown.game.entity;
 import gg.aswedrown.config.PhysicsConfig;
 import gg.aswedrown.game.world.BoundingBox;
 import gg.aswedrown.game.world.Collidable;
-import gg.aswedrown.game.world.World;
+import gg.aswedrown.game.world.TerrainControls;
 import gg.aswedrown.server.AwdServer;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,13 +39,13 @@ public abstract class Entity implements Collidable {
     /**
      * Выполняется каждый тик, служит для обновления данных об этой сущности (game state update).
      */
-    public abstract void update(World world);
+    public abstract void update(TerrainControls terrainControls);
 
     /**
      * Генерирует контейнер вида "ключ-значение", содержащий различные важные параметры об этой сущности,
      * которые должны учитываться всеми игроками (эти данные передаются по сети). Ключами служат названия
      * передаваемых параметров (например, "color"), а значениями - собственно, значения передаваемых параметров
-     * (например, "0xffffff"). Все значения должны быть преобразованы к строке, независимо от их реального типа.
+     * (например, "12345"). Все значения должны быть преобразованы к строке, независимо от их реального типа.
      * Это нужно для универсальности. Клиент сам преобразует значения из строк в нужные типы, если потребуется.
      */
     public abstract Map<String, String> formEntityData();

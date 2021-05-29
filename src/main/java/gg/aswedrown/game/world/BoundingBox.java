@@ -3,11 +3,12 @@ package gg.aswedrown.game.world;
 import lombok.Getter;
 import lombok.NonNull;
 
-@Getter
 public class BoundingBox {
 
-    private final float minX, minY, // левый верхний угол в мире (в тайлах)
-                        maxX, maxY; // правый нижний угол в мире (в тайлах)
+    @Getter
+    private float minX,    minY,    // левый верхний угол в мире (в тайлах)
+                  maxX,    maxY,    // правый нижний угол в мире (в тайлах)
+                  centerX, centerY; // центр в мире (в тайлах)
 
     public BoundingBox(float minX, float minY, float maxX, float maxY) {
         if (minX < 0.0f || minY < 0.0f || maxX < 0.0f || maxY < 0.0f)
@@ -15,28 +16,68 @@ public class BoundingBox {
                     "bounding box coordinates cannot be negative: " +
                             "{" + minX + ", " + minX + ", " + maxX + ", " + maxY + "}");
 
-        this.minX = Math.min(minX, maxX);
-        this.minY = Math.min(minY, maxY);
-        this.maxX = Math.max(minX, maxX);
-        this.maxY = Math.max(minY, maxY);
+        this.minX    = Math.min(minX, maxX);
+        this.minY    = Math.min(minY, maxY);
+        this.maxX    = Math.max(minX, maxX);
+        this.maxY    = Math.max(minY, maxY);
+        this.centerX = (minX + maxX) / 2.0f;
+        this.centerY = (minY + maxY) / 2.0f;
     }
 
-    public float getCenterX() {
-        return (minX + maxX) / 2.0f;
+    public boolean isHorizontallyWithinOf(@NonNull BoundingBox other) {
+        return minX >= other.minX && maxX <= other.maxX;
     }
 
-    public float getCenterY() {
-        return (minY + maxY) / 2.0f;
+    public boolean isVerticallyWithinOf(@NonNull BoundingBox other) {
+        return minY >= other.minY && maxY <= other.maxY;
     }
 
     public boolean isFullyWithinOf(@NonNull BoundingBox other) {
-        return minX >= other.minX && maxX <= other.maxX
-            && minY >= other.minY && maxY <= other.maxY;
+        return isHorizontallyWithinOf(other) && isVerticallyWithinOf(other);
+    }
+
+    public boolean isCenterHorizontallyWithinOf(@NonNull BoundingBox other) {
+        return centerX >= other.minX && centerX <= other.maxX;
+    }
+
+    public boolean isCenterVerticallyWithinOf(@NonNull BoundingBox other) {
+        return centerY >= other.minY && centerY <= other.maxY;
+    }
+
+    public boolean isCenterFullyWithinOf(@NonNull BoundingBox other) {
+        return isCenterHorizontallyWithinOf(other) && isCenterVerticallyWithinOf(other);
     }
 
     public boolean intersectsWith(@NonNull BoundingBox other) {
         return minX < other.maxX && maxX > other.minX
             && minY < other.maxY && maxY > other.minY;
+    }
+
+    public boolean isAboveOf(@NonNull BoundingBox other) {
+        return maxY <= other.minY;
+    }
+
+    public BoundingBox deepCopy() {
+        return new BoundingBox(minX, minY, maxX, maxY);
+    }
+
+    public BoundingBox move(float deltaX, float deltaY) {
+        minX += deltaX;
+        maxX += deltaX;
+        minY += deltaY;
+        maxY += deltaY;
+
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "BoundingBox{" +
+                "minX=" + minX +
+                ", minY=" + minY +
+                ", maxX=" + maxX +
+                ", maxY=" + maxY +
+                '}';
     }
 
 }

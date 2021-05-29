@@ -306,7 +306,7 @@ public class ActiveGameLobby {
                 );
             } catch (Exception ex) {
                 log.error("Unhandled exception during game state update in dimension {} of lobby {}:",
-                        lobbyId, world.getDimension(), ex);
+                        world.getDimension(), lobbyId, ex);
             }
         });
     }

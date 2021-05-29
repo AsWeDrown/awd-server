@@ -2,6 +2,7 @@ package gg.aswedrown.game.world;
 
 import gg.aswedrown.game.FatalGameException;
 import gg.aswedrown.game.entity.Entity;
+import gg.aswedrown.game.entity.Fallable;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class World {
     private final AtomicInteger lastEntityId = new AtomicInteger(0);
 
     @Getter
-    private WorldData worldData;
+    private TerrainControls terrainControls;
 
     private volatile boolean loaded;
 
@@ -42,20 +43,27 @@ public class World {
         loaded = true;
 
         WorldLoader worldLoader = new WorldLoader(dimension);
-        worldData = worldLoader.loadWorld();
+        WorldData worldData = worldLoader.loadWorld();
 
         if (worldLoader.getLoadStatus() != WorldLoader.WorldLoadStatus.LOADED)
             throw new FatalGameException("failed to load world (dimension " + dimension + ")");
+
+        terrainControls = new TerrainControls(worldData);
     }
 
     public void update() {
         synchronized (lock) {
             entities.forEach(entity -> {
                 try {
-                    entity.update(this);
+                    entity.update(terrainControls);
+
+                    if (entity instanceof Fallable) {
+                        Fallable fallable = (Fallable) entity;
+                        fallable.updateGravity(terrainControls);
+                    }
                 } catch (Exception ex) {
                     log.error("Unhandled exception during game state update of entity {} in dimension {} of lobby {}:",
-                            entity.getEntityId(), lobbyId, dimension, ex);
+                            entity.getEntityId(), dimension, lobbyId, ex);
                 }
             });
         }
@@ -106,57 +114,6 @@ public class World {
             entity.setEntityId(0);
             return entities.remove(entity);
         }
-    }
-
-    /**
-     * Вычисляет значение X, в которое может переместиться указанная сущность в этом мире,
-     * максимально близкое к указанному (желаемому). Для этого учитывается "начинка" мира
-     * (окружающие сущность тайлы и прочее), а также размеры и текущая позиция сущности.
-     *
-     * @param entity сущность, которая хочет передвинуться по X.
-     * @param destWorldX желаемая координата X в мире.
-     *
-     * @return координата X в мире, в которую указанная сущность может (имеет право) передвинуться
-     *         с учётом различных законов физики и взаимодействий, наиболее близкая к желаемому X.
-     */
-    public float pathTowardsX(@NonNull Entity entity, float destWorldX) {
-        float entityX = entity.getPosX();
-        float dx = destWorldX - entityX;
-
-        if (dx == 0.0f)
-            return 0.0f;
-
-        BoundingBox entityBb = entity.getBoundingBox();
-
-        int leftmostTileX   = (int) Math.floor(entityBb.getMinX());
-        int rightmostTileX  = (int) Math.ceil (entityBb.getMaxX());
-        int topmostTileY    = (int) Math.floor(entityBb.getMinY());
-        int bottommostTileY = (int) Math.ceil (entityBb.getMaxY());
-
-        boolean pathingRight = dx > 0.0f;
-        int tileX = pathingRight ? rightmostTileX : leftmostTileX;
-        
-        for (int tileY = topmostTileY; tileY < bottommostTileY; tileY++) {
-            TileBlock nearbyTile = getTileAt(tileX, tileY);
-            BoundingBox nearbyTileBb = nearbyTile.getBoundingBox();
-
-            if (nearbyTile.isSolid() && entityBb.intersectsWith(nearbyTileBb))
-                return pathingRight
-                        ? entityX + (nearbyTileBb.getMinX() - entityBb.getMaxX())
-                        : entityX - (entityBb.getMinX() - nearbyTileBb.getMaxX());
-        }
-
-        return destWorldX;
-    }
-
-    public TileBlock getTileAt(int posX, int posY) {
-        return worldData.tiles.stream()
-                .filter(tile -> tile.posX == posX && tile.posY == posY)
-                .findAny()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "tile position out of world range: (" + posX + ", " + posY + "); expected " +
-                                "x in range [0; " + worldData.width + "), " +
-                                "y in range [0; " + worldData.height + ")"));
     }
 
 }

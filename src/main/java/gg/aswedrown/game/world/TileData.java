@@ -1,5 +1,9 @@
 package gg.aswedrown.game.world;
 
+import gg.aswedrown.game.world.tile.SolidHandler;
+import gg.aswedrown.game.world.tile.TileHandler;
+import gg.aswedrown.game.world.tile.VoidHandler;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,39 +18,39 @@ final class TileData {
     //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private static final Map<Integer, Integer> rgbToTileIdMap = new HashMap<>();
-    
-    private static final Map<Integer, Integer> tileFeatures = new HashMap<>();
 
-    private static final int SOLID = 0b1;
-    
-    private static void reg(int rgb, int tileId, int features) {
-        if (rgbToTileIdMap.containsKey(rgb) || tileFeatures.containsKey(tileId))
+    private static final Map<Integer, TileHandler> tileHandlers = new HashMap<>();
+
+    private static void reg(int rgb, int tileId, TileHandler handler) {
+        if (rgbToTileIdMap.containsKey(rgb) || tileHandlers.containsKey(tileId))
             throw new IllegalArgumentException(
                     "duplicate tile data: rgb=#" + Integer.toString(rgb, 16) + ", id=" + tileId);
 
-        rgbToTileIdMap.put(rgb,    tileId  );
-        tileFeatures  .put(tileId, features);
+        rgbToTileIdMap.put(rgb,    tileId );
+        tileHandlers  .put(tileId, handler);
     }
 
     static {
-        // Пустота (полностью прозрачная текстура).
-        rgbToTileIdMap.put(0xffffff, 0);
+        // Пустота (void) (тайлы, сквозь которые всегда можно спокойно, беспрепятственно проходить).
+        VoidHandler voidHandler = new VoidHandler();
+        reg(0xffffff, 0, voidHandler);
 
         // Твёрдые тайлы (solid).
-        reg(0x000000, 1, SOLID);
-        reg(0x4a4a4a, 2, SOLID);
-        reg(0x636363, 3, SOLID);
-        reg(0x7e7e7e, 4, SOLID);
-        reg(0x9a9a9a, 5, SOLID);
-        reg(0xb5b5b5, 6, SOLID);
+        SolidHandler solidHandler = new SolidHandler();
+        reg(0x000000, 1, solidHandler);
+        reg(0x4a4a4a, 2, solidHandler);
+        reg(0x636363, 3, solidHandler);
+        reg(0x7e7e7e, 4, solidHandler);
+        reg(0x9a9a9a, 5, solidHandler);
+        reg(0xb5b5b5, 6, solidHandler);
     }
 
     static Integer rgbToTileId(int rgb) {
         return rgbToTileIdMap.get(rgb);
     }
 
-    static boolean isSolid(int tileId) {
-        return (tileFeatures.get(tileId) & SOLID) != 0;
+    static TileHandler getTileHandler(int tileId) {
+        return tileHandlers.get(tileId);
     }
 
 }

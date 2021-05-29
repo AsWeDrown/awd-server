@@ -1,6 +1,6 @@
 package gg.aswedrown.game.entity;
 
-import gg.aswedrown.game.world.World;
+import gg.aswedrown.game.world.TerrainControls;
 import gg.aswedrown.net.SequenceNumberMath;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.vircon.VirtualConnection;
@@ -14,7 +14,7 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-public class EntityPlayer extends LivingEntity {
+public class EntityPlayer extends FallableLivingEntity {
 
     private final Object lock = new Object();
 
@@ -47,19 +47,22 @@ public class EntityPlayer extends LivingEntity {
         this.character = character;
         this.virCon = virCon;
 
+        spriteWidth  = AwdServer.getServer().getPhysics().getBaseEntityPlayerW();
+        spriteHeight = AwdServer.getServer().getPhysics().getBaseEntityPlayerH();
+
         // TODO: 15.05.2021 remove
-        posX = 65.0f;
-        posY = 20.0f;
+        posX = 30.0f;
+        posY = 38.5f;
         // TODO: 15.05.2021 remove
     }
 
     @Override
-    public void update(World world) {
+    public void update(TerrainControls terrainControls) {
         synchronized (lock) {
             if (!playerInputsQueue.isEmpty()) {
                 PlayerInputs oldestInputs = playerInputsQueue.poll();
                 newestAppliedPacketSequence.set(oldestInputs.getSequence());
-                oldestInputs.apply(this, world);
+                oldestInputs.apply(this, terrainControls);
             }
         }
     }
@@ -108,7 +111,7 @@ public class EntityPlayer extends LivingEntity {
             return (inputsBitfield & INPUT_MOVING_RIGHT) != 0;
         }
 
-        private void apply(EntityPlayer player, World world) {
+        private void apply(EntityPlayer player, TerrainControls terrainControls) {
             float newX = player.posX;
             float newY = player.posY;
 
@@ -124,7 +127,7 @@ public class EntityPlayer extends LivingEntity {
             }
 
             // Вычисляем "фактическую" позицию (куда игрок может передвинуться, с учётом его "желания").
-            newX = world.pathTowardsX(player, newX);
+            newX = terrainControls.advanceTowardsXUntilTerrainCollision(player, newX);
 
             player.posX = newX;
             player.posY = newY;
