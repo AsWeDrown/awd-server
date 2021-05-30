@@ -40,10 +40,10 @@ public class TerrainControls {
         BoundingBox entityBb = entity.getBoundingBox();
         BoundingBox destEntityBb = entityBb.deepCopy().move(dx, 0.0f);
 
-        int leftmostTileX   = (int) Math.floor(entityBb.getMinX());
-        int rightmostTileX  = (int) Math.ceil (entityBb.getMaxX());
-        int topmostTileY    = (int) Math.floor(entityBb.getMinY());
-        int bottommostTileY = (int) Math.ceil (entityBb.getMaxY());
+        int leftmostTileX   = (int) Math.floor(destEntityBb.getMinX());
+        int rightmostTileX  = (int) Math.ceil (destEntityBb.getMaxX());
+        int topmostTileY    = (int) Math.floor(destEntityBb.getMinY());
+        int bottommostTileY = (int) Math.ceil (destEntityBb.getMaxY());
 
         boolean pathingRight = dx > 0.0f;
         int tileX = pathingRight ? rightmostTileX : leftmostTileX;

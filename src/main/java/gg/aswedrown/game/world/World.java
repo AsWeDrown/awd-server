@@ -55,12 +55,12 @@ public class World {
         synchronized (lock) {
             entities.forEach(entity -> {
                 try {
-                    entity.update(terrainControls);
-
                     if (entity instanceof Fallable) {
                         Fallable fallable = (Fallable) entity;
                         fallable.updateGravity(terrainControls);
                     }
+
+                    entity.update(terrainControls);
                 } catch (Exception ex) {
                     log.error("Unhandled exception during game state update of entity {} in dimension {} of lobby {}:",
                             entity.getEntityId(), dimension, lobbyId, ex);
