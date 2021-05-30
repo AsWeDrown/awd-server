@@ -297,10 +297,7 @@ public class ActiveGameLobby {
                                 player -> NetworkService.updateEntityPosition(
                                         player.getVirCon(),
                                         player.getNewestAppliedPacketSequence(),
-                                        entity.getEntityId(),
-                                        entity.getPosX(),
-                                        entity.getPosY(),
-                                        entity.getFaceAngle()
+                                        entity
                                 )
                         )
                 );

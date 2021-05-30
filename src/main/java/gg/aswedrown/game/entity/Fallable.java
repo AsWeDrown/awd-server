@@ -6,6 +6,8 @@ public interface Fallable {
 
     int getMidairTicks();
 
+    float getLastTickFallDistance();
+
     float getFallDistance();
 
     void updateGravity(TerrainControls terrainControls);

@@ -152,10 +152,13 @@ message UpdatePlayerInputs { // C --> S
 }
 
 message UpdateEntityPosition { // C <-- S
-  uint32 entity_id  = 1;
-  float  pos_x      = 2;
-  float  pos_y      = 3;
-  float  face_angle = 4;
+  uint32 entity_id               = 1;
+  float  pos_x                   = 2;
+  float  pos_y                   = 3;
+  float  face_angle              = 4;
+  uint32 midair_ticks            = 5;
+  float  last_tick_fall_distance = 6;
+  float  fall_distance           = 7;
 }
 
 /*

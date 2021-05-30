@@ -1,5 +1,7 @@
 package gg.aswedrown.net;
 
+import gg.aswedrown.game.entity.Entity;
+import gg.aswedrown.game.entity.Fallable;
 import gg.aswedrown.server.data.lobby.LobbyManager;
 import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.NonNull;
@@ -108,8 +110,27 @@ public class NetworkService {
         );
     }
 
-    public static void updateEntityPosition(@NonNull VirtualConnection virCon, int ack,
-                                            int entityId, float posX, float posY, float faceAngle) {
+    public static void updateEntityPosition(@NonNull VirtualConnection virCon, int ack, @NonNull Entity entity) {
+        int   midairTicks          =    0;
+        float lastTickFallDistance = 0.0f;
+        float fallDistance         = 0.0f;
+
+        if (entity instanceof Fallable) {
+            Fallable fallable = (Fallable) entity;
+
+            midairTicks          = fallable.getMidairTicks         ();
+            lastTickFallDistance = fallable.getLastTickFallDistance();
+            fallDistance         = fallable.getFallDistance        ();
+        }
+
+        updateEntityPosition(virCon, ack,
+                entity.getEntityId(), entity.getPosX(), entity.getPosY(), entity.getFaceAngle(),
+                midairTicks, lastTickFallDistance, fallDistance);
+    }
+
+    private static void updateEntityPosition(@NonNull VirtualConnection virCon, int ack,
+                                            int entityId, float posX, float posY, float faceAngle,
+                                            int midairTicks, float lastTickFallDistance, float fallDistance) {
         // Пакеты PlayerActions обрабатываются в игровом цикле (во время игровых
         // серверных тиков), из-за чего могут возникать ситуации вроде этой:
         //
@@ -163,6 +184,9 @@ public class NetworkService {
                 .setPosX(posX)
                 .setPosY(posY)
                 .setFaceAngle(faceAngle)
+                .setMidairTicks(midairTicks)
+                .setLastTickFallDistance(lastTickFallDistance)
+                .setFallDistance(fallDistance)
                 .build(),
                 ack
         );
