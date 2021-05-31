@@ -12,6 +12,7 @@ import gg.aswedrown.server.udp.AwdUdpServer;
 import gg.aswedrown.server.udp.UdpServer;
 import gg.aswedrown.server.vircon.VirtualConnectionManager;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import me.darksidecode.kantanj.db.mongo.MongoManager;
 
@@ -32,10 +33,10 @@ public final class AwdServer {
 
     private long startupBeginTime;
 
-    @Getter
+    @Getter /* NOT reloadable */
     private AwdServerConfig config;
 
-    @Getter
+    @Getter @Setter /* reloadable */
     private PhysicsConfig physics;
 
     @Getter

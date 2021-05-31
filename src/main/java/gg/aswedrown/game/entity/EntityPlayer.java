@@ -51,8 +51,8 @@ public class EntityPlayer extends FallableLivingEntity {
         spriteHeight = AwdServer.getServer().getPhysics().getBaseEntityPlayerH();
 
         // TODO: 15.05.2021 remove
-        posX = 30.0f;
-        posY = 38.5f;
+        posX = 31.2352f;
+        posY = 36.5213f;
         // TODO: 15.05.2021 remove
     }
 
@@ -127,9 +127,7 @@ public class EntityPlayer extends FallableLivingEntity {
             }
 
             // Вычисляем "фактическую" позицию (куда игрок может передвинуться, с учётом его "желания").
-            newX = terrainControls.advanceTowardsXUntilTerrainCollision(player, newX);
-
-            player.posX = newX;
+            player.posX = terrainControls.advanceTowardsXUntilTerrainCollision(player, newX);
             player.posY = newY;
         }
 
