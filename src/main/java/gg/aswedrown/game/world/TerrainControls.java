@@ -41,9 +41,9 @@ public class TerrainControls {
         BoundingBox destEntityBb = entityBb.deepCopy().move(dx, 0.0f);
 
         int leftmostTileX   = (int) Math.floor(destEntityBb.getMinX());
-        int rightmostTileX  = (int) Math.ceil (destEntityBb.getMaxX());
+        int rightmostTileX  = (int) Math.ceil (    entityBb.getMaxX());
         int topmostTileY    = (int) Math.floor(destEntityBb.getMinY());
-        int bottommostTileY = (int) Math.ceil (destEntityBb.getMaxY());
+        int bottommostTileY = (int) Math.ceil (    entityBb.getMaxY());
 
         boolean pathingRight = dx > 0.0f;
         int tileX = pathingRight ? rightmostTileX : leftmostTileX;
@@ -82,10 +82,10 @@ public class TerrainControls {
         BoundingBox entityBb = entity.getBoundingBox();
         BoundingBox destEntityBb = entityBb.deepCopy().move(0.0f, dy);
 
-        int leftmostTileX   = (int) Math.floor(entityBb.getMinX());
-        int rightmostTileX  = (int) Math.ceil (entityBb.getMaxX());
-        int topmostTileY    = (int) Math.floor(entityBb.getMinY());
-        int bottommostTileY = (int) Math.ceil (entityBb.getMaxY());
+        int leftmostTileX   = (int) Math.floor(destEntityBb.getMinX());
+        int rightmostTileX  = (int) Math.ceil (    entityBb.getMaxX());
+        int topmostTileY    = (int) Math.floor(destEntityBb.getMinY());
+        int bottommostTileY = (int) Math.ceil (    entityBb.getMaxY());
 
         boolean pathingBottom = dy > 0.0f;
         int tileY = pathingBottom ? bottommostTileY : topmostTileY;
