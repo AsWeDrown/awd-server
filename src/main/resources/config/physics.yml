@@ -8,4 +8,4 @@ baseEntityPlayerMs: 0.1325
 baseEntityPlayerW: 1.375
 baseEntityPlayerH: 2.125
 
-freeFallAcce: 9.80665
+freeFallAcce: 0.0387
