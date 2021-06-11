@@ -1,6 +1,7 @@
 package gg.aswedrown.game.entity;
 
 import gg.aswedrown.game.world.TerrainControls;
+import gg.aswedrown.game.world.TileBlock;
 import gg.aswedrown.net.SequenceNumberMath;
 import gg.aswedrown.server.AwdServer;
 import gg.aswedrown.server.vircon.VirtualConnection;
@@ -30,6 +31,8 @@ public class EntityPlayer extends FallableLivingEntity {
 
     @Getter
     private final int character; // персонаж игрока
+
+    private boolean climbing; // карабкается ли игрок прямо сейчас по лестнице? (отключает гравитацию)
 
     @Getter
     private final VirtualConnection virCon; // виртуальное соединение, связанное с этим игроком
@@ -72,6 +75,11 @@ public class EntityPlayer extends FallableLivingEntity {
         Map<String, String> data = new HashMap<>();
         data.put("player_id", Integer.toString(playerId));
         return data;
+    }
+
+    @Override
+    public void updateGravity(TerrainControls terrainControls) {
+        if (!climbing) super.updateGravity(terrainControls);
     }
 
     public void enqueuePlayerInputs(int sequence, long inputsBitfield) {
@@ -130,9 +138,23 @@ public class EntityPlayer extends FallableLivingEntity {
                 player.faceAngle = 90.0f; // лицом вправо
             }
 
+            player.climbing = false; // сброс
+
+            if (movingUp()) {
+                TileBlock intersectedLadder = terrainControls
+                        .getFirstIntersectingTile(player, tile
+                                -> tile.handler.isClimbableBy(player));
+
+                if (intersectedLadder != null) {
+                    // Игрок действительно находится на лестнице и может карабкаться.
+                    newY -= player.physics.getBaseEntityPlayerClimbSpeed();
+                    player.climbing = true;
+                }
+            }
+
             // Вычисляем "фактическую" позицию (куда игрок может передвинуться, с учётом его "желания").
             player.posX = terrainControls.advanceTowardsXUntilTerrainCollision(player, newX);
-            player.posY = newY;
+            player.posY = terrainControls.advanceTowardsYUntilTerrainCollision(player, newY);
         }
 
         @Override

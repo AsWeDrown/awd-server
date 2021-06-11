@@ -4,6 +4,8 @@ import gg.aswedrown.game.entity.Entity;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import java.util.function.Predicate;
+
 @RequiredArgsConstructor
 public class TerrainControls {
 
@@ -113,7 +115,7 @@ public class TerrainControls {
      * @return true, если центр масс указанной сущность сейчас устойчив, т.е. сущность не падает
      *         вниз; false - если сущность падает вниз.
      */
-    public boolean isOnGround(Entity entity) {
+    public boolean isOnGround(@NonNull Entity entity) {
         BoundingBox entityBb = entity.getBoundingBox();
 
         float massCenterX = entityBb.getCenterX();
@@ -142,6 +144,32 @@ public class TerrainControls {
         }
 
         return false;
+    }
+
+    public TileBlock getFirstIntersectingTile(@NonNull Entity entity) {
+        return getFirstIntersectingTile(entity, tile -> true);
+    }
+
+    public TileBlock getFirstIntersectingTile(@NonNull Entity entity,
+                                              @NonNull Predicate<? super TileBlock> pred) {
+        BoundingBox entityBb = entity.getBoundingBox();
+
+        int leftmostTileX   = (int) Math.floor(entityBb.getMinX());
+        int rightmostTileX  = (int) Math.ceil (entityBb.getMaxX());
+        int topmostTileY    = (int) Math.floor(entityBb.getMinY());
+        int bottommostTileY = (int) Math.ceil (entityBb.getMaxY());
+
+        for (int tileX = leftmostTileX; tileX < rightmostTileX; tileX++) {
+            for (int tileY = topmostTileY; tileY < bottommostTileY; tileY++) {
+                TileBlock nearbyTile = getTileAt(tileX, tileY);
+                BoundingBox nearbyTileBb = nearbyTile.getBoundingBox();
+
+                if (pred.test(nearbyTile) && entityBb.intersectsWith(nearbyTileBb))
+                    return nearbyTile;
+            }
+        }
+
+        return null;
     }
 
 }

@@ -5,6 +5,7 @@ interpDelay: 5
 interpBufSizeThreshold: 10
 
 baseEntityPlayerMs: 0.1325
+baseEntityPlayerClimbSpeed: 0.09
 baseEntityPlayerW: 1.375
 baseEntityPlayerH: 2.125
 

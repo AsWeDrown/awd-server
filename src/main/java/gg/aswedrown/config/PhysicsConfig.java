@@ -26,6 +26,7 @@ public class PhysicsConfig {
     private int   interpBufSizeThreshold;
 
     private float baseEntityPlayerMs;
+    private float baseEntityPlayerClimbSpeed;
     private float baseEntityPlayerW;
     private float baseEntityPlayerH;
 
