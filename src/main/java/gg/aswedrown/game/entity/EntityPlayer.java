@@ -149,6 +149,11 @@ public class EntityPlayer extends FallableLivingEntity {
                     // Игрок действительно находится на лестнице и может карабкаться.
                     newY -= player.physics.getBaseEntityPlayerClimbSpeed();
                     player.climbing = true;
+
+                    // Сбрасываем гравитацию (вдруг игрок до этого был ей подвержен).
+                    player.midairTicks          =    0;
+                    player.lastTickFallDistance = 0.0f;
+                    player.fallDistance         = 0.0f;
                 }
             }
 
