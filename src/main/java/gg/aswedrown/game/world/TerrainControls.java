@@ -52,7 +52,7 @@ public class TerrainControls {
             TileBlock nearbyTile = getTileAt(tileX, tileY);
             BoundingBox nearbyTileBb = nearbyTile.getBoundingBox();
 
-            if (!nearbyTile.getHandler().isPassableBy(entity) && destEntityBb.intersectsWith(nearbyTileBb))
+            if (!nearbyTile.handler.isPassableBy(entity) && destEntityBb.intersectsWith(nearbyTileBb))
                 return pathingRight
                         ? entityX + (nearbyTileBb.getMinX() - entityBb.getMaxX())
                         : entityX - (entityBb.getMinX() - nearbyTileBb.getMaxX());
@@ -94,7 +94,7 @@ public class TerrainControls {
             TileBlock nearbyTile = getTileAt(tileX, tileY);
             BoundingBox nearbyTileBb = nearbyTile.getBoundingBox();
 
-            if (!nearbyTile.getHandler().isPassableBy(entity) && destEntityBb.intersectsWith(nearbyTileBb)) {
+            if (!nearbyTile.handler.isPassableBy(entity) && destEntityBb.intersectsWith(nearbyTileBb)) {
                 return pathingBottom
                         ? entityY + (nearbyTileBb.getMinY() - entityBb.getMaxY())
                         : entityY - (entityBb.getMinY() - nearbyTileBb.getMaxY());
@@ -132,7 +132,7 @@ public class TerrainControls {
         };
 
         for (TileBlock tileBeneath : tilesBeneath) {
-            if (!tileBeneath.getHandler().isPassableBy(entity)) {
+            if (!tileBeneath.handler.isPassableBy(entity)) {
                 BoundingBox tileBeneathBb = tileBeneath.getBoundingBox();
 
                 if (entityBb.isAboveOf(tileBeneathBb)

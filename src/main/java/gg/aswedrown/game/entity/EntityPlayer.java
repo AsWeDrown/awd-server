@@ -71,7 +71,6 @@ public class EntityPlayer extends FallableLivingEntity {
     public Map<String, String> formEntityData() {
         Map<String, String> data = new HashMap<>();
         data.put("player_id", Integer.toString(playerId));
-
         return data;
     }
 
@@ -96,7 +95,8 @@ public class EntityPlayer extends FallableLivingEntity {
     @RequiredArgsConstructor
     private static final class PlayerInputs implements Comparable<PlayerInputs> {
         private static final long INPUT_MOVING_LEFT  = 0b1,
-                                  INPUT_MOVING_RIGHT = 0b10;
+                                  INPUT_MOVING_RIGHT = 0b10,
+                                  INPUT_MOVING_UP    = 0b100;
 
         @Getter (AccessLevel.PRIVATE)
         private final int sequence;
@@ -109,6 +109,10 @@ public class EntityPlayer extends FallableLivingEntity {
 
         private boolean movingRight() {
             return (inputsBitfield & INPUT_MOVING_RIGHT) != 0;
+        }
+
+        private boolean movingUp() {
+            return (inputsBitfield & INPUT_MOVING_UP) != 0;
         }
 
         private void apply(EntityPlayer player, TerrainControls terrainControls) {

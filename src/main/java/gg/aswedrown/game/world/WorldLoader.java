@@ -106,13 +106,14 @@ public class WorldLoader {
         }
 
         // Сохраняем базовую информацию об этом тайле в памяти.
-        TileBlock tileBlock = new TileBlock();
+        TileBlock tile = new TileBlock();
 
-        tileBlock.tileId = tileId;
-        tileBlock.posX   = x;
-        tileBlock.posY   = y;
+        tile.tileId  = tileId;
+        tile.posX    = x;
+        tile.posY    = y;
+        tile.handler = TileData.newTileHandler(tile);
 
-        targetWorldData.tiles.add(tileBlock);
+        targetWorldData.tiles.add(tile);
     }
 
     public WorldData loadWorld() {
@@ -169,7 +170,7 @@ public class WorldLoader {
             for (int y = 0; y < scheme.getHeight(); y++) {
                 for (int x = 0; x < scheme.getWidth(); x++) {
                     int rgb = scheme.getRGB(x, y) & 0x00ffffff; // удаляем альфа-канал (непрозрачность (не нужна))
-                    processPixel(x, y, rgb, targetWorldData);
+                    processPixel(x, y, rgb, targetWorldData); // в Java переворачивать BMP не нужно (в C++ - нужно)
 
                     if (loadStatus == WorldLoadStatus.BITMAP_ERROR) {
                         log.error("World Loader: Bitmap error");
