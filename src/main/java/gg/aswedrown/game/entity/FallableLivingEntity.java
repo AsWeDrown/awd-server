@@ -25,7 +25,7 @@ public abstract class FallableLivingEntity extends LivingEntity implements Falla
         posY = terrainControls.advanceTowardsYUntilTerrainCollision(this, posY + deltaY);
 
         if (terrainControls.isOnGround(this)) {
-            midairTicks          = 0;
+            midairTicks          =    0;
             lastTickFallDistance = 0.0f;
             fallDistance         = 0.0f;
         } else
