@@ -22,10 +22,9 @@ public class PacketManager {
     private final Map<PacketWrapper.PacketCase,
             PacketListener<? extends Message>> listeners = new HashMap<>();
 
-    @NonNull
     private final AwdServer srv;
 
-    public PacketManager(AwdServer srv) {
+    public PacketManager(@NonNull AwdServer srv) {
         this.srv = srv;
         wirePacketListeners();
     }

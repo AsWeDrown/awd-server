@@ -1,5 +1,9 @@
 package gg.aswedrown.game.entity;
 
+import gg.aswedrown.game.ActiveGameLobby;
+import gg.aswedrown.game.event.GameEvent;
+import gg.aswedrown.game.event.PlayerMoveEvent;
+import gg.aswedrown.game.world.Location;
 import gg.aswedrown.game.world.TerrainControls;
 import gg.aswedrown.game.world.TileBlock;
 import gg.aswedrown.net.SequenceNumberMath;
@@ -100,6 +104,11 @@ public class EntityPlayer extends FallableLivingEntity {
         }
     }
 
+    public ActiveGameLobby getLobby() {
+        return AwdServer.getServer().getGameServer()
+                .getActiveGameLobby(virCon.getCurrentlyJoinedLobbyId());
+    }
+
     @RequiredArgsConstructor
     private static final class PlayerInputs implements Comparable<PlayerInputs> {
         private static final long INPUT_MOVING_LEFT  = 0b1,
@@ -129,6 +138,8 @@ public class EntityPlayer extends FallableLivingEntity {
         }
 
         private void apply(EntityPlayer player, TerrainControls terrainControls) {
+            Location locFrom = new Location(player.posX, player.posY, player.faceAngle);
+
             float newX = player.posX;
             float newY = player.posY;
 
@@ -170,6 +181,10 @@ public class EntityPlayer extends FallableLivingEntity {
             // Вычисляем "фактическую" позицию (куда игрок может передвинуться, с учётом его "желания").
             player.posX = terrainControls.advanceTowardsXUntilTerrainCollision(player, newX);
             player.posY = terrainControls.advanceTowardsYUntilTerrainCollision(player, newY);
+
+            Location locTo = new Location(player.posX, player.posY, player.faceAngle);
+            GameEvent event = new PlayerMoveEvent(player.getLobby(), player, locFrom, locTo);
+            AwdServer.getServer().getGameServer().getEventDispatcher().dispatchEvent(event);
         }
 
         @Override
