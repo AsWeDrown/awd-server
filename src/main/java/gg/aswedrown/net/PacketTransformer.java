@@ -289,6 +289,33 @@ public final class PacketTransformer {
                         .build()
                         .toByteArray();
 
+            case QUEST_BEGIN:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setQuestBegin((QuestBegin) packet)
+                        .build()
+                        .toByteArray();
+
+            case QUEST_ADVANCE:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setQuestAdvance((QuestAdvance) packet)
+                        .build()
+                        .toByteArray();
+
+            case QUEST_END:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setQuestEnd((QuestEnd) packet)
+                        .build()
+                        .toByteArray();
+
             default:
                 // Код "case ..." для пакетов этого типа отсутствует выше.
                 // Нужно добавить! (исп. awd-ptrans-codegen)
@@ -395,6 +422,18 @@ public final class PacketTransformer {
             case UPDATE_ENTITY_POSITION:
                 return new UnwrappedPacketData(
                         sequence, ack, ackBitfield, packetType, wrapper.getUpdateEntityPosition());
+
+            case QUEST_BEGIN:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getQuestBegin());
+
+            case QUEST_ADVANCE:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getQuestAdvance());
+
+            case QUEST_END:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getQuestEnd());
 
             default:
                 // Неизвестный пакет - он будет проигнорирован (не передан никакому PacketListener'у).
