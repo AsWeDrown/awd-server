@@ -104,7 +104,8 @@ public class EntityPlayer extends FallableLivingEntity {
     private static final class PlayerInputs implements Comparable<PlayerInputs> {
         private static final long INPUT_MOVING_LEFT  = 0b1,
                                   INPUT_MOVING_RIGHT = 0b10,
-                                  INPUT_MOVING_UP    = 0b100;
+                                  INPUT_MOVING_UP    = 0b100,
+                                  INPUT_MOVING_DOWN  = 0b1000;
 
         @Getter (AccessLevel.PRIVATE)
         private final int sequence;
@@ -121,6 +122,10 @@ public class EntityPlayer extends FallableLivingEntity {
 
         private boolean movingUp() {
             return (inputsBitfield & INPUT_MOVING_UP) != 0;
+        }
+
+        private boolean movingDown() {
+            return (inputsBitfield & INPUT_MOVING_DOWN) != 0;
         }
 
         private void apply(EntityPlayer player, TerrainControls terrainControls) {
@@ -140,14 +145,19 @@ public class EntityPlayer extends FallableLivingEntity {
 
             player.climbing = false; // сброс
 
-            if (movingUp()) {
+            if (movingUp() || movingDown()) {
                 TileBlock intersectedLadder = terrainControls
                         .getFirstIntersectingTile(player, tile
                                 -> tile.handler.isClimbableBy(player));
 
                 if (intersectedLadder != null) {
                     // Игрок действительно находится на лестнице и может карабкаться.
-                    newY -= player.physics.getBaseEntityPlayerClimbSpeed();
+                    float climbDeltaY = player.physics.getBaseEntityPlayerClimbSpeed();
+
+                    if (movingUp())
+                        climbDeltaY *= -1.0f; // движемся вверх -> Y уменьшается; вниз - увеличивается
+
+                    newY += climbDeltaY;
                     player.climbing = true;
 
                     // Сбрасываем гравитацию (вдруг игрок до этого был ей подвержен).
