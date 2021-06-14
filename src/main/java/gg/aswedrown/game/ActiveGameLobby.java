@@ -4,6 +4,7 @@ import gg.aswedrown.game.entity.Entity;
 import gg.aswedrown.game.entity.EntityPlayer;
 import gg.aswedrown.game.event.EventDispatcher;
 import gg.aswedrown.game.profiling.TpsMeter;
+import gg.aswedrown.game.quest.QuestManager;
 import gg.aswedrown.game.world.World;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.server.AwdServer;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -34,6 +36,9 @@ public class ActiveGameLobby {
     @Getter
     private final EventDispatcher eventDispatcher = new EventDispatcher();
 
+    @Getter
+    private final QuestManager questManager = new QuestManager();
+
     private final Map<Integer, World> dimensions = new HashMap<>();
 
     private volatile boolean gameBegun;
@@ -44,6 +49,12 @@ public class ActiveGameLobby {
 
     @Getter
     private final TpsMeter tpsMeter = new TpsMeter();
+
+    public void forEachPlayer(@NonNull Consumer<? super EntityPlayer> action) {
+        synchronized (lock) {
+            players.forEach(action);
+        }
+    }
 
     public int getPlayers() {
         return players.size();

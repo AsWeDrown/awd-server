@@ -2,6 +2,7 @@ package gg.aswedrown.net;
 
 import gg.aswedrown.game.entity.Entity;
 import gg.aswedrown.game.entity.Fallable;
+import gg.aswedrown.game.quest.Quest;
 import gg.aswedrown.server.data.lobby.LobbyManager;
 import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.NonNull;
@@ -189,6 +190,30 @@ public class NetworkService {
                 .setFallDistance(fallDistance)
                 .build(),
                 ack
+        );
+    }
+
+    public static void beginQuest(@NonNull VirtualConnection virCon, @NonNull Quest quest) {
+        virCon.sendImportantPacket(BeginQuest.newBuilder()
+                .setQuestId(quest.getId())
+                .setQuestType(quest.getType())
+                .build()
+        );
+    }
+
+    public static void advanceQuest(@NonNull VirtualConnection virCon, @NonNull Quest quest) {
+        virCon.sendPacket(AdvanceQuest.newBuilder()
+                .setQuestId(quest.getId())
+                .setProgress(quest.getProgress())
+                .build()
+        );
+    }
+
+    public static void endQuest(@NonNull VirtualConnection virCon, @NonNull Quest quest) {
+        virCon.sendImportantPacket(EndQuest.newBuilder()
+                .setQuestId(quest.getId())
+                .setStatus(quest.getState())
+                .build()
         );
     }
 

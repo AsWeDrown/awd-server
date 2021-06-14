@@ -69,9 +69,9 @@ public class World {
         }
     }
 
-    public void forEachEntity(@NonNull Consumer<? super Entity> consumer) {
+    public void forEachEntity(@NonNull Consumer<? super Entity> action) {
         synchronized (lock) {
-            entities.forEach(consumer);
+            entities.forEach(action);
         }
     }
 

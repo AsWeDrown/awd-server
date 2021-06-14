@@ -289,30 +289,30 @@ public final class PacketTransformer {
                         .build()
                         .toByteArray();
 
-            case QUEST_BEGIN:
+            case BEGIN_QUEST:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
                         .setAck(ack)
                         .setAckBitfield(ackBitfield)
-                        .setQuestBegin((QuestBegin) packet)
+                        .setBeginQuest((BeginQuest) packet)
                         .build()
                         .toByteArray();
 
-            case QUEST_ADVANCE:
+            case ADVANCE_QUEST:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
                         .setAck(ack)
                         .setAckBitfield(ackBitfield)
-                        .setQuestAdvance((QuestAdvance) packet)
+                        .setAdvanceQuest((AdvanceQuest) packet)
                         .build()
                         .toByteArray();
 
-            case QUEST_END:
+            case END_QUEST:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
                         .setAck(ack)
                         .setAckBitfield(ackBitfield)
-                        .setQuestEnd((QuestEnd) packet)
+                        .setEndQuest((EndQuest) packet)
                         .build()
                         .toByteArray();
 
@@ -423,17 +423,17 @@ public final class PacketTransformer {
                 return new UnwrappedPacketData(
                         sequence, ack, ackBitfield, packetType, wrapper.getUpdateEntityPosition());
 
-            case QUEST_BEGIN:
+            case BEGIN_QUEST:
                 return new UnwrappedPacketData(
-                        sequence, ack, ackBitfield, packetType, wrapper.getQuestBegin());
+                        sequence, ack, ackBitfield, packetType, wrapper.getBeginQuest());
 
-            case QUEST_ADVANCE:
+            case ADVANCE_QUEST:
                 return new UnwrappedPacketData(
-                        sequence, ack, ackBitfield, packetType, wrapper.getQuestAdvance());
+                        sequence, ack, ackBitfield, packetType, wrapper.getAdvanceQuest());
 
-            case QUEST_END:
+            case END_QUEST:
                 return new UnwrappedPacketData(
-                        sequence, ack, ackBitfield, packetType, wrapper.getQuestEnd());
+                        sequence, ack, ackBitfield, packetType, wrapper.getEndQuest());
 
             default:
                 // Неизвестный пакет - он будет проигнорирован (не передан никакому PacketListener'у).

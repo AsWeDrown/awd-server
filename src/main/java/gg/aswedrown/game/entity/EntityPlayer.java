@@ -45,6 +45,9 @@ public class EntityPlayer extends FallableLivingEntity {
 
     private final AtomicInteger newestAppliedPacketSequence = new AtomicInteger(0);
 
+    @Getter
+    private float totalDistanceMoved;
+
     public EntityPlayer(int playerId, @NonNull String playerName,
                         int character, @NonNull VirtualConnection virCon) {
         super(Entities.EntityPlayer.TYPE);
@@ -138,7 +141,7 @@ public class EntityPlayer extends FallableLivingEntity {
         }
 
         private void apply(EntityPlayer player, TerrainControls terrainControls) {
-            Location locFrom = new Location(player.posX, player.posY, player.faceAngle);
+            Location locFrom = player.takePositionSnapshot();
 
             float newX = player.posX;
             float newY = player.posY;
@@ -182,9 +185,10 @@ public class EntityPlayer extends FallableLivingEntity {
             player.posX = terrainControls.advanceTowardsXUntilTerrainCollision(player, newX);
             player.posY = terrainControls.advanceTowardsYUntilTerrainCollision(player, newY);
 
-            Location locTo = new Location(player.posX, player.posY, player.faceAngle);
+            Location locTo = player.takePositionSnapshot();
 
             if (!locTo.equals(locFrom)) {
+                player.totalDistanceMoved += locTo.distance(locFrom);
                 GameEvent event = new PlayerMoveEvent(player, locFrom, locTo);
                 player.getLobby().getEventDispatcher().dispatchEvent(event);
             }

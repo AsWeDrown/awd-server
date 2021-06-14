@@ -3,6 +3,7 @@ package gg.aswedrown.game.entity;
 import gg.aswedrown.config.PhysicsConfig;
 import gg.aswedrown.game.world.BoundingBox;
 import gg.aswedrown.game.world.Collidable;
+import gg.aswedrown.game.world.Location;
 import gg.aswedrown.game.world.TerrainControls;
 import gg.aswedrown.server.AwdServer;
 import lombok.Getter;
@@ -53,6 +54,10 @@ public abstract class Entity implements Collidable {
     @Override
     public BoundingBox getBoundingBox() {
         return new BoundingBox(posX, posY, posX + spriteWidth, posY + spriteHeight);
+    }
+
+    public Location takePositionSnapshot() {
+        return new Location(posX, posY, faceAngle);
     }
 
     public void setPosition(float posX, float posY) {

@@ -161,17 +161,18 @@ message UpdateEntityPosition { // C <-- S
   float  fall_distance           = 7;
 }
 
-message QuestBegin {
-  uint32 quest_id   = 1;
-  uint32 quest_desc = 2;
+message BeginQuest {
+  uint32 quest_id     = 1;
+  uint32 quest_type   = 2;
+  uint32 max_progress = 3;
 }
 
-message QuestAdvance {
-  uint32 quest_id        = 1;
-  uint32 progress_points = 2;
+message AdvanceQuest {
+  uint32 quest_id = 1;
+  uint32 progress = 2;
 }
 
-message QuestEnd {
+message EndQuest {
   uint32 quest_id = 1;
   uint32 status   = 2;
 }
@@ -242,9 +243,9 @@ message PacketWrapper {
     DespawnEntity despawn_entity                      = 2001;
     UpdatePlayerInputs update_player_inputs           = 3000;
     UpdateEntityPosition update_entity_position       = 3001;
-    QuestBegin quest_begin                            = 4000;
-    QuestAdvance quest_advance                        = 4001;
-    QuestEnd quest_end                                = 4002;
+    BeginQuest begin_quest                            = 4000;
+    AdvanceQuest advance_quest                        = 4001;
+    EndQuest end_quest                                = 4002;
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //   GENERAL    [10000..99999]
