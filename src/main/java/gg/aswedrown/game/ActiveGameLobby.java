@@ -2,6 +2,7 @@ package gg.aswedrown.game;
 
 import gg.aswedrown.game.entity.Entity;
 import gg.aswedrown.game.entity.EntityPlayer;
+import gg.aswedrown.game.event.EventDispatcher;
 import gg.aswedrown.game.profiling.TpsMeter;
 import gg.aswedrown.game.world.World;
 import gg.aswedrown.net.NetworkService;
@@ -29,6 +30,9 @@ public class ActiveGameLobby {
 
     @NonNull
     private final Collection<EntityPlayer> players;
+
+    @Getter
+    private final EventDispatcher eventDispatcher = new EventDispatcher();
 
     private final Map<Integer, World> dimensions = new HashMap<>();
 

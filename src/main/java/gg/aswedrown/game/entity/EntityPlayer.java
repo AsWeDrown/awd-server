@@ -183,8 +183,11 @@ public class EntityPlayer extends FallableLivingEntity {
             player.posY = terrainControls.advanceTowardsYUntilTerrainCollision(player, newY);
 
             Location locTo = new Location(player.posX, player.posY, player.faceAngle);
-            GameEvent event = new PlayerMoveEvent(player.getLobby(), player, locFrom, locTo);
-            AwdServer.getServer().getGameServer().getEventDispatcher().dispatchEvent(event);
+
+            if (!locTo.equals(locFrom)) {
+                GameEvent event = new PlayerMoveEvent(player, locFrom, locTo);
+                player.getLobby().getEventDispatcher().dispatchEvent(event);
+            }
         }
 
         @Override

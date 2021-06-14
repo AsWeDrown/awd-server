@@ -1,10 +1,10 @@
 package gg.aswedrown.game;
 
-import gg.aswedrown.game.event.EventDispatcher;
 import gg.aswedrown.game.profiling.TpsMeter;
 import gg.aswedrown.server.AwdServer;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -14,14 +14,13 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
+@RequiredArgsConstructor
 public class GameServer {
 
     private static final long START_DELAY_MILLIS = 5000L; // чтобы UDP-сервер точно успел запуститься
 
+    @NonNull
     private final AwdServer srv;
-
-    @Getter
-    private final EventDispatcher eventDispatcher;
 
     private final Collection<ActiveGameLobby> activeGameLobbies = new ArrayList<>();
     private final Object activeGameLobbiesLock = new Object();
@@ -33,11 +32,6 @@ public class GameServer {
     private final TpsMeter tpsMeter = new TpsMeter();
 
     private volatile boolean serverStopped;
-
-    public GameServer(@NonNull AwdServer srv) {
-        this.srv = srv;
-        this.eventDispatcher = new EventDispatcher(srv);
-    }
 
     public void startGameLoopInNewThread() {
         // Запускаем основной сервер (ядро). Используется по сути только для соединений, не связанных с
