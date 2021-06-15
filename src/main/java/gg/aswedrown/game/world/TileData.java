@@ -42,18 +42,21 @@ final class TileData {
 
     static {
         // Пустота (void) (тайлы, сквозь которые всегда можно спокойно, беспрепятственно проходить).
-        reg(0xffffff, 0, VoidHandler.class);
+        reg(0xffffff,   0, VoidHandler.class);
+        reg(0x84659c,   8, VoidHandler.class);
+        reg(0x9a78b4,   9, VoidHandler.class);
+        reg(0xacb4e2,  10, VoidHandler.class);
 
         // Твёрдые тайлы (solid).
-        reg(0x000000, 1, SolidHandler.class);
-        reg(0x4a4a4a, 2, SolidHandler.class);
-        reg(0x636363, 3, SolidHandler.class);
-        reg(0x7e7e7e, 4, SolidHandler.class);
-        reg(0x9a9a9a, 5, SolidHandler.class);
-        reg(0xb5b5b5, 6, SolidHandler.class);
+        reg(0x000000,   1, SolidHandler.class);
+        reg(0x4a4a4a,   2, SolidHandler.class);
+        reg(0x636363,   3, SolidHandler.class);
+        reg(0x7e7e7e,   4, SolidHandler.class);
+        reg(0x9a9a9a,   5, SolidHandler.class);
+        reg(0xb5b5b5,   6, SolidHandler.class);
 
         // Лестницы.
-        reg(0x865e3a, 7, LadderHandler.class);
+        reg(0x865e3a,   7, LadderHandler.class);
     }
 
     static Integer rgbToTileId(int rgb) {
