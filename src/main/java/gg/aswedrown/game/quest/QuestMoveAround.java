@@ -21,14 +21,12 @@ public class QuestMoveAround extends Quest {
     private final Collection<EntityPlayer> completed = new HashSet<>();
 
     public QuestMoveAround(int playersInLobby) {
-        super(TYPE, playersInLobby);
+        super(TYPE, playersInLobby, true);
     }
 
     @Override
-    protected void questAdvanced(@NonNull ActiveGameLobby lobby, int progressPointsAdded) throws Exception {
-        if (progress >= maxProgress) {
-            // TODO: 14.06.2021 ?
-        }
+    protected void questEnded(@NonNull ActiveGameLobby lobby) throws Exception {
+        System.out.println("QuestMoveAround ended!");
     }
 
     @Override

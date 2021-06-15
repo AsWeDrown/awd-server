@@ -14,13 +14,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class QuestManager {
 
+    private final ActiveGameLobby lobby;
+
     private final Object lock = new Object();
 
     private final AtomicInteger nextQuestId = new AtomicInteger(0); // отсчёт с 1
 
     private final Collection<Quest> activeQuests = new HashSet<>();
 
-    public void beginQuest(@NonNull ActiveGameLobby lobby, @NonNull Quest quest) {
+    public void beginQuest(@NonNull Quest quest) {
         if (quest.state != QuestState.NOT_BEGUN)
             throw new IllegalStateException("quest has already begun");
 
@@ -43,7 +45,7 @@ public class QuestManager {
         }
     }
 
-    public void endQuest(@NonNull ActiveGameLobby lobby, @NonNull Quest quest) {
+    public void endQuest(@NonNull Quest quest) {
         synchronized (lock) {
             if (activeQuests.remove(quest)) {
                 try {

@@ -59,11 +59,6 @@ public class EntityPlayer extends FallableLivingEntity {
 
         spriteWidth  = AwdServer.getServer().getPhysics().getBaseEntityPlayerW();
         spriteHeight = AwdServer.getServer().getPhysics().getBaseEntityPlayerH();
-
-        // TODO: 15.05.2021 remove
-        posX = 31.2352f;
-        posY = 36.5213f;
-        // TODO: 15.05.2021 remove
     }
 
     @Override

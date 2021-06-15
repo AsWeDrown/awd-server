@@ -17,7 +17,16 @@ public abstract class Quest implements GameEventListener {
 
     protected final int maxProgress;
 
-    protected int id; // отсчёт с 1
+    /**
+     * Если true, то при каждом продвижении задания (Quest#advance(...)) будет выполняться
+     * проверка текущего прогресса. Если после очередного продвижения progress >= maxProgress,
+     * то задание будет помечено как полностью завершённое (QuestState#ENDED_COMPLETE_FULL),
+     * и задание будет завершено (удалено из активных) в QuestManager'е (соответственно, сразу
+     * же будет вызван метод Quest#questEnded). Полезно для простейших заданий.
+     */
+    protected final boolean autoEnd;
+
+    protected int id; // устанавливается при регистрации (запуске) задания
 
     protected int state = QuestState.NOT_BEGUN;
 

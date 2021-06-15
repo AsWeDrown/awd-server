@@ -5,12 +5,12 @@ import gg.aswedrown.game.entity.EntityPlayer;
 import gg.aswedrown.game.event.EventDispatcher;
 import gg.aswedrown.game.profiling.TpsMeter;
 import gg.aswedrown.game.quest.QuestManager;
+import gg.aswedrown.game.world.Location;
 import gg.aswedrown.game.world.World;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.server.AwdServer;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 @Slf4j
-@RequiredArgsConstructor
 public class ActiveGameLobby {
 
     private final Object lock = new Object();
@@ -37,7 +36,7 @@ public class ActiveGameLobby {
     private final EventDispatcher eventDispatcher = new EventDispatcher();
 
     @Getter
-    private final QuestManager questManager = new QuestManager();
+    private final QuestManager questManager;
 
     private final Map<Integer, World> dimensions = new HashMap<>();
 
@@ -49,6 +48,15 @@ public class ActiveGameLobby {
 
     @Getter
     private final TpsMeter tpsMeter = new TpsMeter();
+
+    public ActiveGameLobby(@NonNull AwdServer srv, int lobbyId, int hostPlayerId,
+                           @NonNull Collection<EntityPlayer> players) {
+        this.srv = srv;
+        this.lobbyId = lobbyId;
+        this.hostPlayerId = hostPlayerId;
+        this.players = players;
+        this.questManager = new QuestManager(this);
+    }
 
     public void forEachPlayer(@NonNull Consumer<? super EntityPlayer> action) {
         synchronized (lock) {
@@ -141,10 +149,7 @@ public class ActiveGameLobby {
 
             gameBegun = true;
             log.info("The game in lobby {} has begun ({} players).", lobbyId, players.size());
-
-            // Уведомляем всех игроков о спавне.. всех игроков.
-            // (Фактический спавн (на сервере) каждого игрока произошёл ранее - завершении загрузки им мира.)
-            players.forEach(this::broadcastEntitySpawn);
+            prepareLobby();
 
             // Запускаем игровой цикл обновления в этой комнате.
             long tickPeriod = 1000L / srv.getConfig().getGameTps();
@@ -167,6 +172,31 @@ public class ActiveGameLobby {
                 }
             }, tickPeriod, tickPeriod);
         }
+    }
+
+    private void prepareLobby() {
+        // Начинается игра с того, что все игроки, кроме одного, оказываются заперты в спальном отсеке.
+        // В этом отсеке спавним всех, кроме одного. Оставшегося игрока спавним в соседнем отсеке (склад).
+        // TODO: 15.06.2021 реализовать систему точек спавна адекватно...
+        float spawnY = 52.0f - srv.getPhysics().getBaseEntityPlayerH();
+        
+        Location[] spawnPoints = {
+                new Location(90.0f, spawnY, 90.0f), // склад (один игрок)
+                new Location(33.0f, spawnY, 90.0f),
+                new Location(36.0f, spawnY, 90.0f),
+                new Location(39.0f, spawnY, 90.0f)
+        };
+
+        List<EntityPlayer> shuffledPlayers = new ArrayList<>(players);
+        Collections.shuffle(shuffledPlayers);
+        shuffledPlayers.get(0).setPosition(spawnPoints[0]);
+
+        for (int i = 1; i < shuffledPlayers.size(); i++)
+            shuffledPlayers.get(i).setPosition(spawnPoints[i]);
+
+        // Уведомляем всех игроков о спавне.. всех игроков.
+        // (Фактический спавн (на сервере) каждого игрока произошёл ранее - завершении загрузки им мира.)
+        players.forEach(this::broadcastEntitySpawn);
     }
 
     private void gameEnded() {

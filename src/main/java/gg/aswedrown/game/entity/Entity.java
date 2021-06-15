@@ -7,6 +7,7 @@ import gg.aswedrown.game.world.Location;
 import gg.aswedrown.game.world.TerrainControls;
 import gg.aswedrown.server.AwdServer;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 
 import java.util.Map;
@@ -58,6 +59,11 @@ public abstract class Entity implements Collidable {
 
     public Location takePositionSnapshot() {
         return new Location(posX, posY, faceAngle);
+    }
+
+    public void setPosition(@NonNull Location loc) {
+        setPosition(loc.getX(), loc.getY());
+        setRotation(loc.getFaceAngle());
     }
 
     public void setPosition(float posX, float posY) {
