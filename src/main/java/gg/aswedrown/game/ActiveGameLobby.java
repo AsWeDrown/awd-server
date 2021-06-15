@@ -5,6 +5,7 @@ import gg.aswedrown.game.entity.EntityPlayer;
 import gg.aswedrown.game.event.EventDispatcher;
 import gg.aswedrown.game.profiling.TpsMeter;
 import gg.aswedrown.game.quest.QuestManager;
+import gg.aswedrown.game.quest.QuestMoveAround;
 import gg.aswedrown.game.world.Location;
 import gg.aswedrown.game.world.World;
 import gg.aswedrown.net.NetworkService;
@@ -197,6 +198,9 @@ public class ActiveGameLobby {
         // Уведомляем всех игроков о спавне.. всех игроков.
         // (Фактический спавн (на сервере) каждого игрока произошёл ранее - завершении загрузки им мира.)
         players.forEach(this::broadcastEntitySpawn);
+
+        // Начальные квесты.
+        questManager.beginQuest(new QuestMoveAround(players.size()));
     }
 
     private void gameEnded() {
