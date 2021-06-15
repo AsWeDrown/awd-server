@@ -48,6 +48,11 @@ public abstract class Quest implements GameEventListener {
         } catch (Exception ex) {
             log.error("Unhandled exception in questAdvanced", ex);
         }
+
+        if (progress >= maxProgress && autoEnd) {
+            state = QuestState.ENDED_COMPLETE_FULL;
+            lobby.getQuestManager().endQuest(this);
+        }
     }
 
 }
