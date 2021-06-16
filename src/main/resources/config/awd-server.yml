@@ -59,7 +59,7 @@ cleanerLobbiesMaxIdleMillis: 1200000 # 20 минут
 cleanerLobbiesCleanupPeriodMillis: 600000 # 10 минут
 
 # Максимальное время жизни бездействующих виртуальных соединений.
-cleanerVirConsMaxIdleMillis: 5000 # 5 секунд
+cleanerVirConsMaxIdleMillis: 7000 # 7 секунд
 
 
 
@@ -89,8 +89,3 @@ playPingPeriodTicks: 10
 
 # Минимальное количество игроков в комнате, необходимое для начала игры.
 minPlayersToStart: 1
-
-# Максимальное число пакетов PlayerActions, которое сервер может обработать за тик.
-# При получении пакетов PlayerActions при заполненном буффере, наиболее старые пакеты
-# будут удаляться, чтобы дать место новым.
-playerActionsBufferSize: 10
