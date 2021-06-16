@@ -14,9 +14,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Игроки должны одновременно (или почти одновременно) нажать
  * на рубильники в своих комнатах, чтобы починить электричество.
  * Чтобы активировать рубильник, игрок должен подойти к нему
- * достаточно близко. Каждый рубильник включается лишь на 5
- * секунд и ждёт включения второго рубильника. Если второй
- * рубильник в течение этих 5 секунд был включен, задание
+ * достаточно близко. Каждый рубильник включается лишь на 3
+ * секунды и ждёт включения второго рубильника. Если второй
+ * рубильник в течение этих 3 секунд был включен, задание
  * считается пройденным. Иначе рубильник отключается.
  */
 public class QuestFixElectricity extends Quest {
@@ -40,8 +40,7 @@ public class QuestFixElectricity extends Quest {
         TileBlock clickedTile = e.getTile();
 
         if (e.getCommand() == PlayerTileInteractEvent.Command.LEFT_CLICK
-                && clickedTile.tileId == 14  // SwitchOff // TODO: 16.06.2021 сделать нормально
-                && e.getPlayer().getBoundingBox().distance(clickedTile.getBoundingBox()) < 1.25f) {
+                && clickedTile.tileId == 14) { // SwitchOff // TODO: 16.06.2021 сделать нормально
             lobby.getScheduler().schedule(new Task(() -> {
                 lobby.replaceTileAt(e.getPlayer().getCurrentDimension(),
                         clickedTile.posX, clickedTile.posY, 13); // SwitchOn
@@ -51,13 +50,15 @@ public class QuestFixElectricity extends Quest {
                 // Оба рубильника включены - задание выполнено.
                 advance(lobby, 1);
             else {
-                // Второй рубильник ещё не включен. Ждём до 5 секунд.
+                // Второй рубильник ещё не включен. Ждём до 3 секунд.
                 lobby.getScheduler().schedule(new Task(() -> {
-                    if (state == QuestState.ACTIVE)
+                    if (state == QuestState.ACTIVE) {
                         // Второй рубильник так и не был включен. Отключаем этот рубильник.
+                        switchesOn.decrementAndGet();
                         lobby.replaceTileAt(e.getPlayer().getCurrentDimension(),
                                 clickedTile.posX, clickedTile.posY, 14); // SwitchOff
-                }, Task.toTicks(5, TimeUnit.SECONDS)));
+                    }
+                }, Task.toTicks(3, TimeUnit.SECONDS)));
             }
         }
     }
