@@ -57,6 +57,16 @@ public class BoundingBox {
         return maxY <= other.minY;
     }
 
+    public double distance(@NonNull BoundingBox other) {
+        return Math.sqrt(distanceSquared(other));
+    }
+
+    public double distanceSquared(@NonNull BoundingBox other) {
+        double dx = centerX - other.centerX;
+        double dy = centerY - other.centerY;
+        return dx * dx + dy * dy;
+    }
+
     public BoundingBox deepCopy() {
         return new BoundingBox(minX, minY, maxX, maxY);
     }

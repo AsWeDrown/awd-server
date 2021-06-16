@@ -28,7 +28,7 @@ public abstract class Quest implements GameEventListener {
 
     protected int id; // устанавливается при регистрации (запуске) задания
 
-    protected int state = QuestState.NOT_BEGUN;
+    protected volatile int state = QuestState.NOT_BEGUN;
 
     protected int progress;
 

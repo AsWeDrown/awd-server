@@ -26,7 +26,7 @@ public class QuestMoveAround extends Quest {
 
     @Override
     protected void questEnded(@NonNull ActiveGameLobby lobby) throws Exception {
-        System.out.println("QuestMoveAround ended!");
+        lobby.getQuestManager().beginQuest(new QuestFixElectricity());
     }
 
     @Override

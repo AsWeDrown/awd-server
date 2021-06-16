@@ -3,10 +3,15 @@ package gg.aswedrown.game;
 import gg.aswedrown.game.entity.Entity;
 import gg.aswedrown.game.entity.EntityPlayer;
 import gg.aswedrown.game.event.EventDispatcher;
+import gg.aswedrown.game.event.GameEvent;
+import gg.aswedrown.game.event.PlayerTileInteractEvent;
 import gg.aswedrown.game.profiling.TpsMeter;
 import gg.aswedrown.game.quest.QuestManager;
 import gg.aswedrown.game.quest.QuestMoveAround;
+import gg.aswedrown.game.task.Scheduler;
+import gg.aswedrown.game.task.ServerThreadScheduler;
 import gg.aswedrown.game.world.Location;
+import gg.aswedrown.game.world.TileBlock;
 import gg.aswedrown.game.world.World;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.server.AwdServer;
@@ -32,6 +37,9 @@ public class ActiveGameLobby {
 
     @NonNull
     private final Collection<EntityPlayer> players;
+
+    @Getter
+    private final Scheduler scheduler = new ServerThreadScheduler();
 
     @Getter
     private final EventDispatcher eventDispatcher = new EventDispatcher();
@@ -201,6 +209,12 @@ public class ActiveGameLobby {
 
         // Начальные квесты.
         questManager.beginQuest(new QuestMoveAround(players.size()));
+
+        // Начальная история.
+        players.forEach(player -> NetworkService
+                .displayChatMessage(player.getVirCon(),
+                        "{YELLOW}Вы очнулись от сильного шума и тряски." +
+                                "Кажется, подлодка с чем-то столкнулась..."));
     }
 
     private void gameEnded() {
@@ -226,6 +240,22 @@ public class ActiveGameLobby {
 
             if (player != null)
                 player.enqueuePlayerInputs(sequence, inputsBitfield);
+        }
+    }
+
+    public void handlePlayerTileInteract(int playerId, int x, int y, int command) {
+        synchronized (lock) {
+            EntityPlayer player = getPlayer(playerId);
+
+            if (player != null) {
+                World world = getWorld(player.getCurrentDimension());
+
+                if (world != null) {
+                    TileBlock tile = world.getTerrainControls().getTileAt(x, y);
+                    GameEvent event = new PlayerTileInteractEvent(player, tile, command);
+                    eventDispatcher.dispatchEvent(event);
+                }
+            }
         }
     }
 
@@ -300,6 +330,14 @@ public class ActiveGameLobby {
         }
     }
 
+    public void replaceTileAt(int dimension, int posX, int posY, int newTileId) {
+        getWorld(dimension).getTerrainControls().replaceTileAt(posX, posY, newTileId);
+        players.stream()
+                .filter(player -> player.getCurrentDimension() == dimension)
+                .forEach(player -> NetworkService
+                        .updateTile(player.getVirCon(), posX, posY, newTileId));
+    }
+
     /**
      * Этот update() ПОЛНОСТЬЮ заменяет GameServer#update() для
      * виртуальных соединений игроков, находящихся в игре (PLAY).
@@ -311,6 +349,7 @@ public class ActiveGameLobby {
         synchronized (lock) {
             currentTick.incrementAndGet();
             tpsMeter.onUpdate();
+            scheduler.updatePending();
 
             srv.getVirConManager().flushAllReceiveQueues(); // обрабатываем пакеты, полученные от игроков
             updateGameState();                              // выполняем обновление (и, м.б., ставим на отправку пакеты)

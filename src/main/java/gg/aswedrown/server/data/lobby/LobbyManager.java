@@ -382,6 +382,12 @@ public class LobbyManager {
                     virCon.getCurrentLocalPlayerId(), sequence, inputsBitfield);
     }
 
+    public void handlePlayerTileInteract(@NonNull VirtualConnection virCon, int x, int y, int command) {
+        if (virCon.isAuthorized() && virCon.getGameLobby() != null)
+            virCon.getGameLobby().handlePlayerTileInteract(
+                    virCon.getCurrentLocalPlayerId(), x, y, command);
+    }
+
     private int generateNewLobbyId() {
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         int id;

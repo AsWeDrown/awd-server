@@ -1,9 +1,6 @@
 package gg.aswedrown.game.world;
 
-import gg.aswedrown.game.world.tile.LadderHandler;
-import gg.aswedrown.game.world.tile.SolidHandler;
-import gg.aswedrown.game.world.tile.TileHandler;
-import gg.aswedrown.game.world.tile.VoidHandler;
+import gg.aswedrown.game.world.tile.*;
 import lombok.NonNull;
 
 import java.lang.reflect.Constructor;
@@ -46,6 +43,8 @@ final class TileData {
         reg(0x84659c,   8, VoidHandler.class);
         reg(0x9a78b4,   9, VoidHandler.class);
         reg(0xacb4e2,  10, VoidHandler.class);
+        reg(0x5e5e5e,  11, VoidHandler.class);
+        reg(0xd24a44,  12, VoidHandler.class);
 
         // Твёрдые тайлы (solid).
         reg(0x000000,   1, SolidHandler.class);
@@ -57,6 +56,10 @@ final class TileData {
 
         // Лестницы.
         reg(0x865e3a,   7, LadderHandler.class);
+
+        // Тайлы, с которыми можно взаимодействовать.
+        reg(0x9ac561,  13, SwitchHandler.class);
+        reg(0x6e8a47,  14, SwitchHandler.class);
     }
 
     static Integer rgbToTileId(int rgb) {

@@ -21,6 +21,12 @@ public class TerrainControls {
                                 "y in range [0; " + worldData.height + ")"));
     }
 
+    public void replaceTileAt(int posX, int posY, int newTileId) {
+        TileBlock tile = getTileAt(posX, posY);
+        tile.tileId = newTileId;
+        tile.handler = TileData.newTileHandler(tile);
+    }
+
     /**
      * Вычисляет значение X, в которое может переместиться указанная сущность в этом мире,
      * максимально близкое к указанному (желаемому). Для этого учитывается "начинка" мира

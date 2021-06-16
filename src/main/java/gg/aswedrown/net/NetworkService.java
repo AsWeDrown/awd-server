@@ -9,7 +9,7 @@ import lombok.NonNull;
 
 import java.util.Map;
 
-public class NetworkService {
+public final class NetworkService {
 
     private NetworkService() {}
 
@@ -213,6 +213,22 @@ public class NetworkService {
         virCon.sendImportantPacket(EndQuest.newBuilder()
                 .setQuestId(quest.getId())
                 .setStatus(quest.getState())
+                .build()
+        );
+    }
+
+    public static void updateTile(@NonNull VirtualConnection virCon, int x, int y, int newTileId) {
+        virCon.sendImportantPacket(UpdateTile.newBuilder()
+                .setX(x)
+                .setY(y)
+                .setNewTileId(newTileId)
+                .build()
+        );
+    }
+
+    public static void displayChatMessage(@NonNull VirtualConnection virCon, @NonNull String message) {
+        virCon.sendImportantPacket(DisplayChatMessage.newBuilder()
+                .setMessage(message)
                 .build()
         );
     }

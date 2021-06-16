@@ -289,6 +289,33 @@ public final class PacketTransformer {
                         .build()
                         .toByteArray();
 
+            case PLAYER_TILE_INTERACT:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setPlayerTileInteract((PlayerTileInteract) packet)
+                        .build()
+                        .toByteArray();
+
+            case UPDATE_TILE:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setUpdateTile((UpdateTile) packet)
+                        .build()
+                        .toByteArray();
+
+            case DISPLAY_CHAT_MESSAGE:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setDisplayChatMessage((DisplayChatMessage) packet)
+                        .build()
+                        .toByteArray();
+
             case BEGIN_QUEST:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
@@ -422,6 +449,18 @@ public final class PacketTransformer {
             case UPDATE_ENTITY_POSITION:
                 return new UnwrappedPacketData(
                         sequence, ack, ackBitfield, packetType, wrapper.getUpdateEntityPosition());
+
+            case PLAYER_TILE_INTERACT:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getPlayerTileInteract());
+
+            case UPDATE_TILE:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getUpdateTile());
+
+            case DISPLAY_CHAT_MESSAGE:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getDisplayChatMessage());
 
             case BEGIN_QUEST:
                 return new UnwrappedPacketData(

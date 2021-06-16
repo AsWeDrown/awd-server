@@ -17,4 +17,8 @@ public abstract class TileHandler {
         return false;
     }
 
+    public boolean canInteract(@NonNull Entity entity) {
+        return false;
+    }
+
 }

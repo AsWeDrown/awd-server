@@ -161,18 +161,34 @@ message UpdateEntityPosition { // C <-- S
   float  fall_distance           = 7;
 }
 
-message BeginQuest {
+message PlayerTileInteract { // C --> S
+  uint32 x       = 1;
+  uint32 y       = 2;
+  uint32 command = 3;
+}
+
+message UpdateTile { // C <-- S
+  uint32 x           = 1;
+  uint32 y           = 2;
+  uint32 new_tile_id = 3;
+}
+
+message DisplayChatMessage { // C <-- S
+  string message = 1;
+}
+
+message BeginQuest { // C <-- S
   uint32 quest_id     = 1;
   uint32 quest_type   = 2;
   uint32 max_progress = 3;
 }
 
-message AdvanceQuest {
+message AdvanceQuest { // C <-- S
   uint32 quest_id = 1;
   uint32 progress = 2;
 }
 
-message EndQuest {
+message EndQuest { // C <-- S
   uint32 quest_id = 1;
   uint32 status   = 2;
 }
@@ -243,6 +259,9 @@ message PacketWrapper {
     DespawnEntity despawn_entity                      = 2001;
     UpdatePlayerInputs update_player_inputs           = 3000;
     UpdateEntityPosition update_entity_position       = 3001;
+    PlayerTileInteract player_tile_interact           = 3002;
+    UpdateTile update_tile                            = 3003;
+    DisplayChatMessage display_chat_message           = 3004;
     BeginQuest begin_quest                            = 4000;
     AdvanceQuest advance_quest                        = 4001;
     EndQuest end_quest                                = 4002;
