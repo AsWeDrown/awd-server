@@ -197,6 +197,7 @@ public final class NetworkService {
         virCon.sendImportantPacket(BeginQuest.newBuilder()
                 .setQuestId(quest.getId())
                 .setQuestType(quest.getType())
+                .setMaxProgress(quest.getMaxProgress())
                 .build()
         );
     }
