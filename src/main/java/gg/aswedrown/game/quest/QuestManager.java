@@ -31,15 +31,14 @@ public class QuestManager {
                 quest.id = nextQuestId.incrementAndGet();
                 quest.state = QuestState.ACTIVE;
                 lobby.getEventDispatcher().registerListener(quest);
+                lobby.forEachPlayer(player -> NetworkService
+                        .beginQuest(player.getVirCon(), quest));
 
                 try {
                     quest.questBegun(lobby);
                 } catch (Exception ex) {
                     log.error("Unhandled exception in questBegun", ex);
                 }
-
-                lobby.forEachPlayer(player -> NetworkService
-                        .beginQuest(player.getVirCon(), quest));
             } else
                 throw new IllegalStateException("duplicate quest");
         }
@@ -48,15 +47,15 @@ public class QuestManager {
     public void endQuest(@NonNull Quest quest) {
         synchronized (lock) {
             if (activeQuests.remove(quest)) {
+                lobby.getEventDispatcher().unregisterListener(quest);
+                lobby.forEachPlayer(player -> NetworkService
+                        .endQuest(player.getVirCon(), quest));
+
                 try {
                     quest.questEnded(lobby);
                 } catch (Exception ex) {
                     log.error("Unhandled exception in questEnded", ex);
                 }
-
-                lobby.getEventDispatcher().unregisterListener(quest);
-                lobby.forEachPlayer(player -> NetworkService
-                        .endQuest(player.getVirCon(), quest));
             } else
                 throw new IllegalStateException("no such quest");
         }
