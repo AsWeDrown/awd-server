@@ -252,8 +252,11 @@ public class ActiveGameLobby {
 
                 if (world != null) {
                     TileBlock tile = world.getTerrainControls().getTileAt(x, y);
-                    GameEvent event = new PlayerTileInteractEvent(player, tile, command);
-                    eventDispatcher.dispatchEvent(event);
+
+                    if (tile.handler.canInteract(player)) {
+                        GameEvent event = new PlayerTileInteractEvent(player, tile, command);
+                        eventDispatcher.dispatchEvent(event);
+                    }
                 }
             }
         }
