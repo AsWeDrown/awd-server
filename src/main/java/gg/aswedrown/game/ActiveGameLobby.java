@@ -10,6 +10,7 @@ import gg.aswedrown.game.quest.QuestManager;
 import gg.aswedrown.game.quest.QuestMoveAround;
 import gg.aswedrown.game.task.Scheduler;
 import gg.aswedrown.game.task.ServerThreadScheduler;
+import gg.aswedrown.game.world.Environment;
 import gg.aswedrown.game.world.Location;
 import gg.aswedrown.game.world.TileBlock;
 import gg.aswedrown.game.world.World;
@@ -54,6 +55,9 @@ public class ActiveGameLobby {
 
     private final AtomicLong currentTick  = new AtomicLong(0L);
     private final AtomicLong lastPingTick = new AtomicLong(0L);
+
+    @Getter
+    private Environment environment;
 
     @Getter
     private final TpsMeter tpsMeter = new TpsMeter();
@@ -145,6 +149,14 @@ public class ActiveGameLobby {
         }
     }
 
+    public void updateEnvironment(@NonNull Environment environment) {
+        synchronized (lock) {
+            this.environment = environment;
+            players.forEach(player -> NetworkService
+                    .updateEnvironment(player.getVirCon(), environment.getEnvBitfield()));
+        }
+    }
+
     /**
      * Запускает игру в этой комнате фактически. Выполняется только
      * после получения пакета JoinWorldComplete от всех игроков в комнате.
@@ -206,6 +218,9 @@ public class ActiveGameLobby {
         // Уведомляем всех игроков о спавне.. всех игроков.
         // (Фактический спавн (на сервере) каждого игрока произошёл ранее - завершении загрузки им мира.)
         players.forEach(this::broadcastEntitySpawn);
+
+        // Начальное окружение.
+        updateEnvironment(new Environment());
 
         // Начальные квесты.
         questManager.beginQuest(new QuestMoveAround(players.size()));

@@ -3,6 +3,7 @@ package gg.aswedrown.game.quest;
 import gg.aswedrown.game.ActiveGameLobby;
 import gg.aswedrown.game.event.PlayerTileInteractEvent;
 import gg.aswedrown.game.task.Task;
+import gg.aswedrown.game.world.Environment;
 import gg.aswedrown.game.world.TileBlock;
 import lombok.NonNull;
 
@@ -30,8 +31,13 @@ public class QuestFixElectricity extends Quest {
     }
 
     @Override
+    protected void questBegun(@NonNull ActiveGameLobby lobby) throws Exception {
+        lobby.updateEnvironment(new Environment().enableAlarm(true));
+    }
+
+    @Override
     protected void questEnded(@NonNull ActiveGameLobby lobby) throws Exception {
-        System.out.println("elec fixed!");
+        lobby.updateEnvironment(new Environment().enableAlarm(false));
     }
 
     @Override

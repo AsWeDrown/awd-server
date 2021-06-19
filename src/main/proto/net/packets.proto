@@ -193,6 +193,10 @@ message EndQuest { // C <-- S
   uint32 status   = 2;
 }
 
+message UpdateEnvironment { // C <-- S
+  uint64 env_bitfield = 1; // на самом деле используется uint32, но 64 нужно для нормальной работы в Java ("long")
+}
+
 /*
 ---------------------------------------------------------------------------------------------------
    ОБЩИЕ (GENERAL)
@@ -262,6 +266,7 @@ message PacketWrapper {
     PlayerTileInteract player_tile_interact           = 3002;
     UpdateTile update_tile                            = 3003;
     DisplayChatMessage display_chat_message           = 3004;
+    UpdateEnvironment update_environment              = 3005;
     BeginQuest begin_quest                            = 4000;
     AdvanceQuest advance_quest                        = 4001;
     EndQuest end_quest                                = 4002;

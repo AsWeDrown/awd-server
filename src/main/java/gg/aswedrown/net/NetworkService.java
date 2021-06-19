@@ -234,4 +234,11 @@ public final class NetworkService {
         );
     }
 
+    public static void updateEnvironment(@NonNull VirtualConnection virCon, long envBitfield) {
+        virCon.sendImportantPacket(UpdateEnvironment.newBuilder()
+                .setEnvBitfield(envBitfield)
+                .build()
+        );
+    }
+
 }

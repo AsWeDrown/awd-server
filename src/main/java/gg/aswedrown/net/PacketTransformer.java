@@ -316,6 +316,15 @@ public final class PacketTransformer {
                         .build()
                         .toByteArray();
 
+            case UPDATE_ENVIRONMENT:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setUpdateEnvironment((UpdateEnvironment) packet)
+                        .build()
+                        .toByteArray();
+
             case BEGIN_QUEST:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
@@ -461,6 +470,10 @@ public final class PacketTransformer {
             case DISPLAY_CHAT_MESSAGE:
                 return new UnwrappedPacketData(
                         sequence, ack, ackBitfield, packetType, wrapper.getDisplayChatMessage());
+
+            case UPDATE_ENVIRONMENT:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getUpdateEnvironment());
 
             case BEGIN_QUEST:
                 return new UnwrappedPacketData(
