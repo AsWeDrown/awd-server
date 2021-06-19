@@ -25,6 +25,11 @@ public class QuestMoveAround extends Quest {
     }
 
     @Override
+    protected void questBegun(@NonNull ActiveGameLobby lobby) throws Exception {
+        lobby.updateEnvironment(lobby.getEnvironment().enableAlarm(true));
+    }
+
+    @Override
     protected void questEnded(@NonNull ActiveGameLobby lobby) throws Exception {
         lobby.getQuestManager().beginQuest(new QuestFixElectricity());
     }

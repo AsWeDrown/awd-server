@@ -10,8 +10,9 @@ public class Environment {
     private long envBitfield;
 
     public Environment enableAlarm(boolean enable) {
-        if (enable)
-            envBitfield |= ENABLE_ALARM;
+        if (enable) envBitfield |=  ENABLE_ALARM;
+        else        envBitfield &= ~ENABLE_ALARM;
+
         return this;
     }
 
