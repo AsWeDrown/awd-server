@@ -45,6 +45,11 @@ final class TileData {
         reg(0xacb4e2,  10, VoidHandler.class);
         reg(0x5e5e5e,  11, VoidHandler.class);
         reg(0xd24a44,  12, VoidHandler.class);
+        reg(0x6a66aa,  17, VoidHandler.class);
+        reg(0xa6a5c5,  18, VoidHandler.class);
+        reg(0x93cec8,  22, VoidHandler.class);
+        reg(0x708986,  23, VoidHandler.class);
+        reg(0xce93bf,  24, VoidHandler.class);
 
         // Твёрдые тайлы (solid).
         reg(0x000000,   1, SolidHandler.class);
@@ -53,13 +58,20 @@ final class TileData {
         reg(0x7e7e7e,   4, SolidHandler.class);
         reg(0x9a9a9a,   5, SolidHandler.class);
         reg(0xb5b5b5,   6, SolidHandler.class);
+        reg(0xce93bf,  19, SolidHandler.class);
+        reg(0xaf85a4,  20, SolidHandler.class);
+        reg(0x947e8e,  21, SolidHandler.class);
 
         // Лестницы.
         reg(0x865e3a,   7, LadderHandler.class);
 
-        // Тайлы, с которыми можно взаимодействовать.
+        // Переключатели.
         reg(0x9ac561,  13, SwitchHandler.class);
         reg(0x6e8a47,  14, SwitchHandler.class);
+
+        // Люки.
+        reg(0xc9d95b,  15, HatchClosedHandler.class);
+        reg(0xd4d9b2,  16, HatchOpenHandler  .class);
     }
 
     static Integer rgbToTileId(int rgb) {

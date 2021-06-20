@@ -197,6 +197,10 @@ message UpdateEnvironment { // C <-- S
   uint64 env_bitfield = 1; // на самом деле используется uint32, но 64 нужно для нормальной работы в Java ("long")
 }
 
+message PlaySound { // C <-- S
+  uint32 sound_id = 1;
+}
+
 /*
 ---------------------------------------------------------------------------------------------------
    ОБЩИЕ (GENERAL)
@@ -267,6 +271,7 @@ message PacketWrapper {
     UpdateTile update_tile                            = 3003;
     DisplayChatMessage display_chat_message           = 3004;
     UpdateEnvironment update_environment              = 3005;
+    PlaySound play_sound                              = 3006;
     BeginQuest begin_quest                            = 4000;
     AdvanceQuest advance_quest                        = 4001;
     EndQuest end_quest                                = 4002;

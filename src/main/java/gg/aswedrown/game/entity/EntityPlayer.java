@@ -3,6 +3,8 @@ package gg.aswedrown.game.entity;
 import gg.aswedrown.game.ActiveGameLobby;
 import gg.aswedrown.game.event.GameEvent;
 import gg.aswedrown.game.event.PlayerMoveEvent;
+import gg.aswedrown.game.time.AtomicClock;
+import gg.aswedrown.game.time.Clock;
 import gg.aswedrown.game.world.Location;
 import gg.aswedrown.game.world.TerrainControls;
 import gg.aswedrown.game.world.TileBlock;
@@ -47,6 +49,9 @@ public class EntityPlayer extends FallableLivingEntity {
 
     @Getter
     private float totalDistanceMoved;
+
+    @Getter
+    private final Clock roofHeadHitClock = new AtomicClock(0L);
 
     public EntityPlayer(int playerId, @NonNull String playerName,
                         int character, @NonNull VirtualConnection virCon) {

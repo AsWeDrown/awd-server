@@ -77,6 +77,12 @@ public class ActiveGameLobby {
         }
     }
 
+    public Collection<EntityPlayer> getPlayersList() {
+        synchronized (lock) {
+            return Collections.unmodifiableCollection(players);
+        }
+    }
+
     public int getPlayers() {
         return players.size();
     }

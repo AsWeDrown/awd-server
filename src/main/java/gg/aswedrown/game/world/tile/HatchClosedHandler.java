@@ -5,17 +5,18 @@ import gg.aswedrown.game.entity.EntityPlayer;
 import gg.aswedrown.game.world.TileBlock;
 import lombok.NonNull;
 
-public class SwitchHandler extends VoidHandler {
+public class HatchClosedHandler extends SolidHandler {
 
-    private static final float MAX_INTERACTION_DISTANCE = 1.75f; // в тайлах
+    private static final float MAX_INTERACTION_DISTANCE = 1.25f; // в тайлах
 
-    public SwitchHandler(@NonNull TileBlock tile) {
+    public HatchClosedHandler(@NonNull TileBlock tile) {
         super(tile);
     }
 
     @Override
     public boolean canInteract(@NonNull Entity entity) {
-        return entity instanceof EntityPlayer
+        // Для открытия люка игрок должен быть сверху (над люком).
+        return entity instanceof EntityPlayer && entity.getPosY() < tile.posY
                 && entity.getBoundingBox().distance(tile.getBoundingBox()) <= MAX_INTERACTION_DISTANCE;
     }
 

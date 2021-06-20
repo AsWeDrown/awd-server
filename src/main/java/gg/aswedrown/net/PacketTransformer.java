@@ -325,6 +325,15 @@ public final class PacketTransformer {
                         .build()
                         .toByteArray();
 
+            case PLAY_SOUND:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setPlaySound((PlaySound) packet)
+                        .build()
+                        .toByteArray();
+
             case BEGIN_QUEST:
                 return PacketWrapper.newBuilder()
                         .setSequence(sequence)
@@ -474,6 +483,10 @@ public final class PacketTransformer {
             case UPDATE_ENVIRONMENT:
                 return new UnwrappedPacketData(
                         sequence, ack, ackBitfield, packetType, wrapper.getUpdateEnvironment());
+
+            case PLAY_SOUND:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getPlaySound());
 
             case BEGIN_QUEST:
                 return new UnwrappedPacketData(
