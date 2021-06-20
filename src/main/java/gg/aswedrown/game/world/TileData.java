@@ -50,6 +50,7 @@ final class TileData {
         reg(0x93cec8,  22, VoidHandler.class);
         reg(0x708986,  23, VoidHandler.class);
         reg(0x43746e,  24, VoidHandler.class);
+        reg(0xd2d2d2,  25, VoidHandler.class);
 
         // Твёрдые тайлы (solid).
         reg(0x000000,   1, SolidHandler.class);
