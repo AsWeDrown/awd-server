@@ -2,6 +2,7 @@ package gg.aswedrown.game.quest;
 
 import gg.aswedrown.game.ActiveGameLobby;
 import gg.aswedrown.game.event.PlayerTileInteractEvent;
+import gg.aswedrown.game.sound.Sound;
 import gg.aswedrown.game.task.Task;
 import gg.aswedrown.game.world.TileBlock;
 import lombok.NonNull;
@@ -44,6 +45,8 @@ public class QuestFixElectricity extends Quest {
         if (e.getCommand() == PlayerTileInteractEvent.Command.LEFT_CLICK
                 && clickedTile.tileId == 14) { // SwitchOff // TODO: 16.06.2021 сделать нормально
             lobby.getScheduler().schedule(new Task(() -> {
+                lobby.playSound(e.getPlayer().getCurrentDimension(),
+                        new Sound(Sound.SWITCH_TOGGLE, e.getTile().posX, e.getTile().posY));
                 lobby.replaceTileAt(e.getPlayer().getCurrentDimension(),
                         clickedTile.posX, clickedTile.posY, 13); // SwitchOn
             }, 0L));
@@ -57,6 +60,9 @@ public class QuestFixElectricity extends Quest {
                     if (state == QuestState.ACTIVE) {
                         // Второй рубильник так и не был включен. Отключаем этот рубильник.
                         switchesOn.decrementAndGet();
+
+                        lobby.playSound(e.getPlayer().getCurrentDimension(),
+                                new Sound(Sound.SWITCH_TOGGLE, e.getTile().posX, e.getTile().posY));
                         lobby.replaceTileAt(e.getPlayer().getCurrentDimension(),
                                 clickedTile.posX, clickedTile.posY, 14); // SwitchOff
                     }

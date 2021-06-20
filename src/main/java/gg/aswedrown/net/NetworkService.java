@@ -3,6 +3,7 @@ package gg.aswedrown.net;
 import gg.aswedrown.game.entity.Entity;
 import gg.aswedrown.game.entity.Fallable;
 import gg.aswedrown.game.quest.Quest;
+import gg.aswedrown.game.sound.Sound;
 import gg.aswedrown.server.data.lobby.LobbyManager;
 import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.NonNull;
@@ -237,6 +238,15 @@ public final class NetworkService {
     public static void updateEnvironment(@NonNull VirtualConnection virCon, long envBitfield) {
         virCon.sendImportantPacket(UpdateEnvironment.newBuilder()
                 .setEnvBitfield(envBitfield)
+                .build()
+        );
+    }
+
+    public static void playSound(@NonNull VirtualConnection virCon, @NonNull Sound sound) {
+        virCon.sendPacket(PlaySound.newBuilder()
+                .setSoundId(sound.getId())
+                .setSourceX(sound.getSourceX())
+                .setSourceY(sound.getSourceY())
                 .build()
         );
     }

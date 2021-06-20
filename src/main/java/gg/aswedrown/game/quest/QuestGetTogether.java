@@ -3,6 +3,8 @@ package gg.aswedrown.game.quest;
 import gg.aswedrown.game.ActiveGameLobby;
 import gg.aswedrown.game.entity.EntityPlayer;
 import gg.aswedrown.game.event.PlayerMoveEvent;
+import gg.aswedrown.game.event.PlayerTileInteractEvent;
+import gg.aswedrown.game.sound.Sound;
 
 import java.util.Collection;
 
@@ -33,6 +35,18 @@ public class QuestGetTogether extends Quest {
 
         // Все игроки находятся достаточно близко друг к другу.
         advance(lobby, 1);
+    }
+
+    @Override
+    public void onPlayerTileInteract(PlayerTileInteractEvent e) {
+        if (e.getTile().tileId == 15) { // HatchClosed
+            ActiveGameLobby lobby = e.getPlayer().getLobby();
+
+            lobby.playSound(e.getPlayer().getCurrentDimension(),
+                    new Sound(Sound.HATCH_TOGGLE, e.getTile().posX, e.getTile().posY));
+            lobby.replaceTileAt(e.getPlayer().getCurrentDimension(),
+                    e.getTile().posX, e.getTile().posY, 16); // HatchOpen
+        }
     }
 
 }

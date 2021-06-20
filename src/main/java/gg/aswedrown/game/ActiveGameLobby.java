@@ -4,10 +4,12 @@ import gg.aswedrown.game.entity.Entity;
 import gg.aswedrown.game.entity.EntityPlayer;
 import gg.aswedrown.game.event.EventDispatcher;
 import gg.aswedrown.game.event.GameEvent;
+import gg.aswedrown.game.event.GenericEventListener;
 import gg.aswedrown.game.event.PlayerTileInteractEvent;
 import gg.aswedrown.game.profiling.TpsMeter;
 import gg.aswedrown.game.quest.QuestManager;
 import gg.aswedrown.game.quest.QuestMoveAround;
+import gg.aswedrown.game.sound.Sound;
 import gg.aswedrown.game.task.Scheduler;
 import gg.aswedrown.game.task.ServerThreadScheduler;
 import gg.aswedrown.game.world.Environment;
@@ -204,6 +206,8 @@ public class ActiveGameLobby {
     private void prepareLobby() {
         // Начинается игра с того, что все игроки, кроме одного, оказываются заперты в спальном отсеке.
         // В этом отсеке спавним всех, кроме одного. Оставшегося игрока спавним в соседнем отсеке (склад).
+        eventDispatcher.registerListener(new GenericEventListener());
+
         // TODO: 15.06.2021 реализовать систему точек спавна адекватно...
         float spawnY = 52.0f - srv.getPhysics().getBaseEntityPlayerH();
         
@@ -228,7 +232,7 @@ public class ActiveGameLobby {
         // Начальное окружение.
         updateEnvironment(new Environment());
 
-        // Начальные квесты.
+        // Начальные квесты (задания).
         questManager.beginQuest(new QuestMoveAround(players.size()));
 
         // Начальная история.
@@ -355,11 +359,22 @@ public class ActiveGameLobby {
     }
 
     public void replaceTileAt(int dimension, int posX, int posY, int newTileId) {
-        getWorld(dimension).getTerrainControls().replaceTileAt(posX, posY, newTileId);
-        players.stream()
-                .filter(player -> player.getCurrentDimension() == dimension)
-                .forEach(player -> NetworkService
-                        .updateTile(player.getVirCon(), posX, posY, newTileId));
+        synchronized (lock) {
+            getWorld(dimension).getTerrainControls().replaceTileAt(posX, posY, newTileId);
+            players.stream()
+                    .filter(player -> player.getCurrentDimension() == dimension)
+                    .forEach(player -> NetworkService
+                            .updateTile(player.getVirCon(), posX, posY, newTileId));
+        }
+    }
+
+    public void playSound(int dimension, @NonNull Sound sound) {
+        synchronized (lock) {
+            players.stream()
+                    .filter(player -> player.getCurrentDimension() == dimension)
+                    .forEach(player -> NetworkService
+                            .playSound(player.getVirCon(), sound));
+        }
     }
 
     /**

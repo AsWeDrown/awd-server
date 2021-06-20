@@ -199,6 +199,8 @@ message UpdateEnvironment { // C <-- S
 
 message PlaySound { // C <-- S
   uint32 sound_id = 1;
+  float  source_x = 2;
+  float  source_y = 3;
 }
 
 /*
