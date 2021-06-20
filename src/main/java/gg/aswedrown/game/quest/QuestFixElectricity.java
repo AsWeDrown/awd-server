@@ -33,8 +33,10 @@ public class QuestFixElectricity extends Quest {
     @Override
     protected void questEnded(@NonNull ActiveGameLobby lobby) throws Exception {
         lobby.updateEnvironment(lobby.getEnvironment().enableAlarm(false));
+
         lobby.getQuestManager().beginQuest(new QuestShatterRoof(lobby.getPlayers()));
         lobby.getQuestManager().beginQuest(new QuestGetTogether());
+        lobby.getQuestManager().beginQuest(new QuestVisitCaptain(lobby.getPlayers()));
     }
 
     @Override

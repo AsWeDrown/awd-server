@@ -4,14 +4,14 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 @Slf4j
 public class EventDispatcher {
 
     private final Object lock = new Object();
 
-    private final Collection<GameEventListener> listeners = new HashSet<>();
+    private final Collection<GameEventListener> listeners = new CopyOnWriteArraySet<>();
 
     public void registerListener(@NonNull GameEventListener listener) {
         synchronized (lock) {

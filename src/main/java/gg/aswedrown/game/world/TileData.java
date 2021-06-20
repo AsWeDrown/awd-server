@@ -73,6 +73,9 @@ final class TileData {
         // Люки.
         reg(0xc9d95b,  15, HatchClosedHandler.class);
         reg(0xd4d9b2,  16, HatchOpenHandler  .class);
+
+        // Финальная дверь для входа к капитану подлодки.
+        reg(0x51af9f,  26, FinalCaptainDoorHandler.class);
     }
 
     static Integer rgbToTileId(int rgb) {

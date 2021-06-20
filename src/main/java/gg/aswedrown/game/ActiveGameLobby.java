@@ -18,11 +18,13 @@ import gg.aswedrown.game.world.TileBlock;
 import gg.aswedrown.game.world.World;
 import gg.aswedrown.net.NetworkService;
 import gg.aswedrown.server.AwdServer;
+import gg.aswedrown.server.vircon.VirtualConnection;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -64,6 +66,8 @@ public class ActiveGameLobby {
     @Getter
     private final TpsMeter tpsMeter = new TpsMeter();
 
+    private final AtomicInteger gameEndStatus = new AtomicInteger(GameEndStatus.SERVER_ERROR);
+
     public ActiveGameLobby(@NonNull AwdServer srv, int lobbyId, int hostPlayerId,
                            @NonNull Collection<EntityPlayer> players) {
         this.srv = srv;
@@ -71,6 +75,16 @@ public class ActiveGameLobby {
         this.hostPlayerId = hostPlayerId;
         this.players = players;
         this.questManager = new QuestManager(this);
+    }
+
+    public void setGameEndStatus(int status) {
+        if (status < 1)
+            throw new IllegalArgumentException(
+                    "game end status cannot have a value of less than 1");
+
+        synchronized (lock) {
+            gameEndStatus.set(status);
+        }
     }
 
     public void forEachPlayer(@NonNull Consumer<? super EntityPlayer> action) {
@@ -192,10 +206,12 @@ public class ActiveGameLobby {
             new Timer().scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    if (gameStopped)
+                    if (gameStopped) {
                         // Не делаем return, чтобы успеть совершить последнее обновление,
                         // чтобы разослать игрокам все необходимые пакеты (о завершении).
                         cancel();
+                        doLast();
+                    }
 
                     update();
                 }
@@ -242,11 +258,31 @@ public class ActiveGameLobby {
                                 "Кажется, подлодка с чем-то столкнулась..."));
     }
 
-    private void gameEnded() {
+    private void gameEnded() { // также см. #doLast()
         synchronized (lock) {
-            log.info("Ending game in lobby {} ({} players).", lobbyId, players.size());
+            int gameEndStatus = this.gameEndStatus.get();
+
+            log.info("Ending game in lobby {} with status {} ({} players).",
+                    lobbyId, gameEndStatus, players.size());
+            players.forEach(player -> NetworkService
+                    .endGame(player.getVirCon(), gameEndStatus));
+        }
+    }
+
+    private void doLast() { // также см. #gameEnded()
+        synchronized (lock) {
+            for (EntityPlayer player : players) {
+                VirtualConnection virCon = player.getVirCon();
+
+                virCon.setGameLobby(null);
+                virCon.setCurrentCharacter(0);
+                virCon.setCurrentlyHostedLobbyId(0);
+                virCon.setCurrentlyJoinedLobbyId(0);
+                virCon.setCurrentLocalPlayerId(0);
+            }
+
             srv.getGameServer().unregisterActiveGameLobby(this);
-            // TODO: 16.05.2021 завершающие пакеты?
+            log.info("Finanalized lobby {}", lobbyId);
         }
     }
 

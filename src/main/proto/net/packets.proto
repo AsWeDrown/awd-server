@@ -177,6 +177,16 @@ message DisplayChatMessage { // C <-- S
   string message = 1;
 }
 
+message UpdateEnvironment { // C <-- S
+  uint64 env_bitfield = 1; // на самом деле используется uint32, но 64 нужно для нормальной работы в Java ("long")
+}
+
+message PlaySound { // C <-- S
+  uint32 sound_id = 1;
+  float  source_x = 2;
+  float  source_y = 3;
+}
+
 message BeginQuest { // C <-- S
   uint32 quest_id     = 1;
   uint32 quest_type   = 2;
@@ -193,14 +203,8 @@ message EndQuest { // C <-- S
   uint32 status   = 2;
 }
 
-message UpdateEnvironment { // C <-- S
-  uint64 env_bitfield = 1; // на самом деле используется uint32, но 64 нужно для нормальной работы в Java ("long")
-}
-
-message PlaySound { // C <-- S
-  uint32 sound_id = 1;
-  float  source_x = 2;
-  float  source_y = 3;
+message EndGame {
+  uint32 status = 1;
 }
 
 /*
@@ -277,6 +281,7 @@ message PacketWrapper {
     BeginQuest begin_quest                            = 4000;
     AdvanceQuest advance_quest                        = 4001;
     EndQuest end_quest                                = 4002;
+    EndGame end_game                                  = 9000;
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //   GENERAL    [10000..99999]

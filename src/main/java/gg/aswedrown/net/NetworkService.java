@@ -251,4 +251,11 @@ public final class NetworkService {
         );
     }
 
+    public static void endGame(@NonNull VirtualConnection virCon, int status) {
+        virCon.sendImportantPacket(EndGame.newBuilder()
+                .setStatus(status)
+                .build()
+        );
+    }
+
 }

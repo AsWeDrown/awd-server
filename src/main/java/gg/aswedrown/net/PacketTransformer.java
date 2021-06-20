@@ -361,6 +361,15 @@ public final class PacketTransformer {
                         .build()
                         .toByteArray();
 
+            case END_GAME:
+                return PacketWrapper.newBuilder()
+                        .setSequence(sequence)
+                        .setAck(ack)
+                        .setAckBitfield(ackBitfield)
+                        .setEndGame((EndGame) packet)
+                        .build()
+                        .toByteArray();
+
             default:
                 // Код "case ..." для пакетов этого типа отсутствует выше.
                 // Нужно добавить! (исп. awd-ptrans-codegen)
@@ -499,6 +508,10 @@ public final class PacketTransformer {
             case END_QUEST:
                 return new UnwrappedPacketData(
                         sequence, ack, ackBitfield, packetType, wrapper.getEndQuest());
+
+            case END_GAME:
+                return new UnwrappedPacketData(
+                        sequence, ack, ackBitfield, packetType, wrapper.getEndGame());
 
             default:
                 // Неизвестный пакет - он будет проигнорирован (не передан никакому PacketListener'у).
