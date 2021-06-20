@@ -37,7 +37,7 @@ public class QuestVisitCaptain extends Quest {
         TileBlock clickedTile = e.getTile();
 
         if (e.getCommand() == PlayerTileInteractEvent.Command.LEFT_CLICK
-                && clickedTile.tileId == 26 // FinalCaptainDoor
+                && (clickedTile.tileId == 26 || clickedTile.tileId == 27) // FinalCaptainDoorTop || FinalCaptainDoorBottom
                 && ready.add(e.getPlayer()))
             advance(lobby, 1);
     }
