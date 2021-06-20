@@ -7,7 +7,7 @@ import lombok.NonNull;
 
 public class HatchClosedHandler extends SolidHandler {
 
-    private static final float MAX_INTERACTION_DISTANCE = 1.25f; // в тайлах
+    private static final float MAX_INTERACTION_DISTANCE = 1.75f; // в тайлах
 
     public HatchClosedHandler(@NonNull TileBlock tile) {
         super(tile);

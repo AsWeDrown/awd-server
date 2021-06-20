@@ -49,11 +49,8 @@ public class QuestShatterRoof extends Quest {
             World world = lobby.getWorld(player.getCurrentDimension());
             TileBlock tileHit = world.getTerrainControls().getTileAt(tileHitX, tileHitY);
 
-            System.out.println("HIT " + tileHit.tileId + " at " + tileHit.posX + ", " + tileHit.posY);
-
             if (!tileHit.handler.isPassableBy(player)
                     && player.getRoofHeadHitClock().hasElapsed(MIN_ROOF_HEAD_HIT_DELAY_MILLIS)) {
-                System.out.println("  Advance!");
                 player.getRoofHeadHitClock().reset();
                 lobby.playSound(world.getDimension(), new Sound(Sound.ROOF_HEAD_HIT, e.getTo()));
                 advance(player.getLobby(), 1);
