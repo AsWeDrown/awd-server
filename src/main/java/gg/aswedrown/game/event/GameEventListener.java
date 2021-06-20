@@ -6,4 +6,8 @@ public interface GameEventListener {
 
     default void onPlayerTileInteract(PlayerTileInteractEvent e) {}
 
+    default void onWorldUpdate(WorldUpdateEvent e) {}
+
+    default void onEntityDeath(EntityDeathEvent e) {}
+
 }

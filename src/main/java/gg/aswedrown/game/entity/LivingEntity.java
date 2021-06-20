@@ -9,4 +9,8 @@ public abstract class LivingEntity extends Entity {
         super(entityType);
     }
 
+    public void kill() {
+        currentHealth = 0.0f;
+    }
+
 }

@@ -2,10 +2,7 @@ package gg.aswedrown.game;
 
 import gg.aswedrown.game.entity.Entity;
 import gg.aswedrown.game.entity.EntityPlayer;
-import gg.aswedrown.game.event.EventDispatcher;
-import gg.aswedrown.game.event.GameEvent;
-import gg.aswedrown.game.event.GenericEventListener;
-import gg.aswedrown.game.event.PlayerTileInteractEvent;
+import gg.aswedrown.game.event.*;
 import gg.aswedrown.game.profiling.TpsMeter;
 import gg.aswedrown.game.quest.QuestManager;
 import gg.aswedrown.game.quest.QuestMoveAround;
@@ -452,6 +449,9 @@ public class ActiveGameLobby {
         dimensions.values().forEach(world -> {
             try {
                 // Обновляем всё, что происходит в этом измерении.
+                GameEvent event = new WorldUpdateEvent(world);
+                eventDispatcher.dispatchEvent(event);
+
                 world.update();
 
                 // Рассылаем всем игрокам в этом измерении обновлённые состояния сущностей (Entity) в нём.

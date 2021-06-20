@@ -21,4 +21,8 @@ public abstract class TileHandler {
         return false;
     }
 
+    public boolean kills(@NonNull Entity entity) {
+        return false;
+    }
+
 }

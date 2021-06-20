@@ -78,6 +78,9 @@ final class TileData {
         // Финальная дверь для входа к капитану подлодки.
         reg(0x51af9f,  26, FinalCaptainDoorHandler.class);
         reg(0x8cbab6,  27, FinalCaptainDoorHandler.class);
+
+        // Смертельно холодная вода.
+        reg(0x434a84,  29, DeadlyWaterHandler.class);
     }
 
     static Integer rgbToTileId(int rgb) {

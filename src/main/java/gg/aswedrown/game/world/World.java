@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -66,6 +67,12 @@ public class World {
                             entity.getEntityId(), dimension, lobbyId, ex);
                 }
             });
+        }
+    }
+
+    public Collection<Entity> getEntitiesList() {
+        synchronized (lock) {
+            return Collections.unmodifiableCollection(entities);
         }
     }
 
